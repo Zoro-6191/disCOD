@@ -1,14 +1,20 @@
 {
     // general bot settings
-    // prefix can be multiple characters long and may contain a-z,1-9, all special chars and spaces
-    "prefix": "!",
+    "discord_token": "",
 
+    // debug mode: print excessive information to the console.
+    "debug": false,
+    
     // server timezone
     "timezone": "IST",
     
     // cmd settings
     "command": 
     {
+        // prefix to accept commands
+        // prefix can be multiple characters long and may contain a-z,1-9, all special chars and spaces
+        "prefix": "!",
+
         // these commands will be completely ignored by the bot
         "bypass": [ "abcd", "poop" ],
         
@@ -21,7 +27,13 @@
 
         // this is the default global cooldown period for each command, more configuration below
         // example: "69s" or "69m" or "69h"
-        "default_global_cooldown": "1s"
+        "default_global_cooldown": "1s",
+
+        // least admin level required to bypass user command coolown
+        "usercooldown_bypass_level": 60,
+        
+        // least admin level required to bypass global command coolown
+        "globalcooldown_bypass_level": 80
     },
 
     // cod4 server info

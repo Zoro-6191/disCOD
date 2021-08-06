@@ -1,0 +1,12 @@
+// if a command doesnt have a specific cooldown mentioned here, it'll just have default cooldown.
+// alternatively, values can be "default" if you want default cooldown
+// Accepted format:
+//  "69s" = 69 seconds
+//  "69m" = 69 minutes
+//  "69h" = 69 hours
+//  "default" = default cooldown time as set in config.json
+// it can NOT have more than 1 value like "6m9s"
+{
+    "ban": "20m",
+    "kick": "10m"
+}
