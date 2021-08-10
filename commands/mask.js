@@ -1,0 +1,1 @@
+const ErrorHandler = require.main.require('./src/errorhandler')

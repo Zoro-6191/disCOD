@@ -2,7 +2,7 @@
   "name": "discod",
   "version": "1.0.0",
   "description": "COD4 Discord Bot",
-  "main": "run.js",
+  "main": "bot.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
