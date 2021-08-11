@@ -8,8 +8,14 @@
 
 const eventhandler = require('./src/eventhandler')
 const conf = require('./conf')
-
+const db = require('./utils/database')
 
 
 eventhandler.init()
 conf.init()
+
+eventhandler.bot.once('database_ready', ()=>
+{
+    // init other things
+    console.log(`DB Ready`)
+})

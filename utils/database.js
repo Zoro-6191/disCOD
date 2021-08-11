@@ -1,20 +1,20 @@
 // this module will take care of b3/codbot database connection
+const fs = require('fs')
 const mysql = require('promise-mysql')
 const { exit } = require('process')
+const { bot } = require.main.require('./src/eventhandler')
 const ErrorHandler = require.main.require('./src/errorhandler')
 
-var connection, pool, aliveLoop
+var pool, aliveLoop
 
 module.exports = 
 {
-    connection,
     pool,
     aliveLoop,
 
-    init: function()
+    init: async function()
     {
         const mainconfig = require.main.require('./conf').mainconfig
-		const { bot } = require.main.require('./src/eventhandler')
 		
 		mysqldb = mainconfig.mysqldb
 
@@ -31,7 +31,7 @@ module.exports =
 			})
 		
 		// synchronous connection
-		this.connection = await mysql.createConnection(
+		mysql.createConnection(
 			{
 				host: mysqldb.host,
 				port: mysqldb.port,
@@ -43,12 +43,7 @@ module.exports =
 				{
 					if( err.code == 'ECONNREFUSED' )
 						ErrorHandler.fatal( `MySQL Server refused connection.\nThis means the MySQL server is either down or has blocked this IP Address.` )
-
-					if( err.code == 'ER_ACCESS_DENIED_ERROR' )
-						ErrorHandler.fatal( `MySQL ERROR:\n${err.sqlMessage}` )
-
-					if( err.code == 'ER_BAD_DB_ERROR' )	// database doesn't exist
-                        ErrorHandler.fatal( `MySQL ERROR:\n${err.sqlMessage}` )
+					else ErrorHandler.fatal( `MySQL ERROR:\n${err.sqlMessage}` )
 				})
 		
 		this.keepAlive();
@@ -68,4 +63,47 @@ module.exports =
     {
         return pool
     }
+}
+
+// check if things are correct, then emit a global event
+async function DBExistsGoAhead()
+{
+	// update database in pool
+	module.exports.pool = await mysql.createConnection(
+		{
+			host: mysqldb.host,
+			port: mysqldb.port,
+			user: mysqldb.user,
+			password: mysqldb.password,
+			database: mysqldb.database
+		}).catch(err=>ErrorHandler.fatal(err)/* can it even get here */)
+
+	pool = module.exports.pool
+
+	// now to check if our table(discord) exists
+	pool.query( `SHOW TABLES LIKE discord`, async (err, result)=> 
+		{
+			if( err )
+				ErrorHandler.fatal(err)
+			else if( result.length == 0 )
+			{
+				console.log(`Required table "discord" doesn't exist.\nCreating`)
+				createTable()
+			}
+			else bot.emit('database_ready')
+		} )
+}
+
+function createTable()
+{
+	// read /src/discord.sql, parse it and query it
+	var template = fs.readFileSync(`./src/sql/discord.sql`,'utf-8')
+
+	pool.query( template )
+		.then( ()=>
+		{
+			console.log(`Created Table: "${table}"`)
+			bot.emit('database_ready')
+		})
+		.catch( err => ErrorHandler.fatal(err) )
 }

@@ -34,7 +34,7 @@ module.exports.init = function()
     }
 
     // check debug mode
-    var debugvar = this.mainconfig.codbot.debug
+    var debugvar = this.mainconfig.debug
     if( typeof debugvar == 'boolean' )
     {
         if(debugvar)
@@ -47,10 +47,10 @@ module.exports.init = function()
     else ErrorHandler.warning(`Debug mode only accepts boolean(true/false) as it's variable, and without quotes.\nDisabling Debug Mode.`)
 
     // check if timezone is mentioned correctly
-    var tz = this.mainconfig.codbot.timezone
+    var tz = this.mainconfig.timezone
     if( tz == undefined || !isValidTimeZone(tz))
     {
-        this.mainconfig.codbot.timezone = 'GMT'
+        this.mainconfig.timezone = 'GMT'
         if( this.DebugMode || DetailedDebug )
             console.log(`Bad Timezone Entry in config: "${tz}\nUsing "GMT"`)
     }
@@ -58,4 +58,20 @@ module.exports.init = function()
         console.log(`Timezone "${tz}" accepted.`)
     else console.log(`TimeZone: ${tz}`)
     // timezone check end
+}
+
+function isValidTimeZone(tz) 
+{
+    if (!Intl || !Intl.DateTimeFormat().resolvedOptions().timeZone)
+        throw new Error('Time zones are not available in this environment');
+
+    try 
+    {
+        Intl.DateTimeFormat(undefined, {timeZone: tz});
+        return true;
+    }
+    catch(ex) 
+    {
+        return false;
+    }
 }
