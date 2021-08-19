@@ -2,7 +2,7 @@
 const fs = require('fs')
 const mysql = require('promise-mysql')
 const { exit } = require('process')
-const { bot } = require.main.require('./src/eventhandler')
+const eventhandler = require.main.require('./src/eventhandler')
 const ErrorHandler = require.main.require('./src/errorhandler')
 
 var pool, aliveLoop
@@ -65,9 +65,29 @@ module.exports =
     }
 }
 
+function checkConfigEntries( mysqldb )
+{
+	// host can be pretty much anything
+	// but can't contain spaces
+
+	Object.keys(mysqldb).forEach( property => 
+	{
+		if( property != "port" )
+		{
+			mysqldb[property] = mysqldb[property].trim()	// remove extra white spaces from line start and end
+
+			// for idiots
+			if( mysqldb[property].split(' ').length > 1 )
+				ErrorHandler.fatal(`Invalid Entry in JSON\nFile: /conf/codbot.json\nIn property "${property}" of mysqldb\nSpaces are not allowed: "${mysqldb[property]}"`)
+		}
+	});
+}
+
 // check if things are correct, then emit a global event
 async function DBExistsGoAhead()
 {
+	var currentTables = []
+
 	// update database in pool
 	module.exports.pool = await mysql.createConnection(
 		{
@@ -81,16 +101,21 @@ async function DBExistsGoAhead()
 	pool = module.exports.pool
 
 	// now to check if our table(discord) exists
-	pool.query( `SHOW TABLES LIKE discord`, async (err, result)=> 
+	pool.query( `SHOW TABLES`, async (err, result)=> 
 		{
 			if( err )
 				ErrorHandler.fatal(err)
-			else if( result.length == 0 )
+			else if( result.length == 0 ) // no tables exist
 			{
 				console.log(`Required table "discord" doesn't exist.\nCreating`)
-				createTable()
+				return createTable()
 			}
-			else bot.emit('database_ready')
+			else for( i=0; i< result.length; i++ )	// some tables exist
+				currentTables[i] = result[i].Tables_in_codbot
+
+			if( currentTables.includes('discord') )
+				return eventhandler.bot.emit('database_ready')
+			else return createTable()
 		} )
 }
 
@@ -102,8 +127,8 @@ function createTable()
 	pool.query( template )
 		.then( ()=>
 		{
-			console.log(`Created Table: "${table}"`)
-			bot.emit('database_ready')
+			console.log(`Created Table: "discord"`)
+			eventhandler.bot.emit('database_ready')
 		})
 		.catch( err => ErrorHandler.fatal(err) )
 }

@@ -13,6 +13,7 @@ const db = require('./utils/database')
 
 eventhandler.init()
 conf.init()
+db.init()
 
 eventhandler.bot.once('database_ready', ()=>
 {

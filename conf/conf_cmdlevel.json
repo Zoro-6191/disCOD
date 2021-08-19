@@ -1,0 +1,51 @@
+// this config decides admin levels required to use a command
+
+//  ========================================
+//  DEFAULT GROUPS:
+//      0 = Guest
+//      1 = User
+//      2 = Regular
+//      20 = Moderator
+//      40 = Admin
+//      60 = Fulladmin
+//      80 = Senioradmin
+//      100 - Superadmin
+//  ========================================
+{
+    "aliases": 20,
+    "ban": 60,
+    "baninfo": 40,
+    "fast_restart": 60,
+    "forcelink": 100,
+    "fullinfo": 100,
+    "gametype": 80,
+    "getss": 1,
+    "help": 0,
+    "isp": 20,
+    "kick": 40,
+    "lastbans": 40,
+    "leveltest": 0,
+    "link": 0,
+    "linktest": 1,
+    "list": 20,
+    "locate": 20,
+    "mag": 80,
+    "makereg": 100,
+    "map_restart": 80,
+    "map": 80,
+    "maps": 1,
+    "mask": 80,
+    "onlineadmins": 20,
+    "onlineregulars": 1,
+    "permban": 80,
+    "putgroup": 100,
+    "rules": 0,
+    "say": 40,
+    "scream": 40,
+    "screensay": 80,
+    "screentell": 60,
+    "tell": 40,
+    "unban": 60,
+    "unlink": 0,
+    "unmask": 80
+}
