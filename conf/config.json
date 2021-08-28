@@ -59,6 +59,6 @@
         "port": 3306,   // default: 3306
         "user": "root", // avoid root whenever possible
         "password": "password",
-        "database": "b3"
+        "database": "codbot"
     }
 }

@@ -9,7 +9,10 @@
 const eventhandler = require('./src/eventhandler')
 const conf = require('./conf')
 const db = require('./utils/database')
-
+const rcontool = require('./utils/rcontool')
+const groupmanager = require('./utils/groupmanager')
+const maps = require('./utils/maps')
+const gametypes = require('./utils/gametypes')
 
 eventhandler.init()
 conf.init()
@@ -17,6 +20,5 @@ db.init()
 
 eventhandler.bot.once('database_ready', ()=>
 {
-    // init other things
-    console.log(`DB Ready`)
+    rcontool.initRcon()
 })
