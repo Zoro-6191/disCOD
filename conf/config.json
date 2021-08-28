@@ -55,10 +55,10 @@
     // codbot/b3 database
     "mysqldb": 
     {
-        "host": "localhost",
+        "host": "snr.vfesports.in",
         "port": 3306,   // default: 3306
-        "user": "codbot", // avoid root whenever possible
-        "password": "password",
-        "database": "codbot"
+        "user": "b3-test", // avoid root whenever possible
+        "password": "vF6969clan",
+        "database": "b3-test"
     }
 }

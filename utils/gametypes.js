@@ -1,0 +1,1 @@
+// this module takes care of gametypes

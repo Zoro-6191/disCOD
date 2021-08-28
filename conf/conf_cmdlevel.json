@@ -29,6 +29,7 @@
     "linktest": 1,
     "list": 20,
     "locate": 20,
+    "lookup": 60,
     "mag": 80,
     "makereg": 100,
     "map_restart": 80,
