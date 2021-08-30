@@ -13,6 +13,7 @@ const rcontool = require('./utils/rcontool')
 const groupmanager = require('./utils/groupmanager')
 const maps = require('./utils/maps')
 const gametypes = require('./utils/gametypes')
+const cooldownmanager = require('./src/cooldownmanager')
 
 eventhandler.init()
 conf.init()
@@ -21,4 +22,10 @@ db.init()
 eventhandler.bot.once('database_ready', ()=>
 {
     rcontool.initRcon()
+    cooldownmanager.init()
+    groupmanager.init()
+    maps.init()
+    gametypes.init()
+
+    // now connect to discord?
 })
