@@ -1,7 +1,6 @@
 // this module initializes configs
 const cjson = require('comment-json')
 const fs = require('fs')
-const { extname } = require('path')
 const ErrorHandler = require('../src/errorhandler')
 
 const DetailedDebug = false

@@ -16,10 +16,7 @@ module.exports.init = async function()
         if( err )
             ErrorHandler.fatal(`Error while creating global Groups object\n${err}`)
         else if( result.length == 0 )   // no entries exist in table
-        {
-            // insert default groups to table
-            insertDefaultGroups()
-        }
+            ErrorHandler.fatal(`No groups exist in groups table.`)
         else createGlobalGroups( result )
     })
 }
@@ -162,33 +159,4 @@ function LevelToBits( level )
         return undefined
 
     return obj.bits
-}
-
-async function insertDefaultGroups()
-{
-	var rl = require('readline').createInterface( {input: fs.createReadStream('./sql/templates/defaultgroups.sql'), output: process.stdout, terminal: false } );
-	
-    rl.on( 'error', err => ErrorHandler.fatal(err) )
-
-    // read individual line and query it while reading
-    rl.on( 'line', (line)=>
-        {
-            db.pool.query( line, (err,result)=>{
-                if(err)
-                    ErrorHandler.fatal(err)
-            })
-        })
-
-    // notify to console
-	rl.on( 'close', ()=> {
-		console.log(`Initiated Default Groups:\n	100 - Super Admin\n	80 - Senior Admin\n	60 - Full Admin\n	40 - Admin\n	20 - Moderator\n	2 - Regular\n	1 - User\n	0 - Guest`)
-        // now to forward to creating global group object
-        // createGlobalGroups()
-        // just querying again is probably best
-        db.pool.query( `SELECT * FROM groups;`, (err,result)=>{
-            if( err )
-                ErrorHandler.fatal(`Error while creating global Groups object\n${err}`)
-            else createGlobalGroups( result )
-        })
-	})
 }
