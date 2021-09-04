@@ -4,7 +4,8 @@ const fs = require('fs')
 const ErrorHandler = require.main.require('./src/errorhandler')
 
 // for local use, just storing basic cooldown time values
-var globalCommandCooldowns, userCommandCooldowns
+var globalCommandCooldowns = [], userCommandCooldowns = []
+var currentGlobalCooldowns = {}, currentUserCooldowns = {}
 
 module.exports = 
 {
@@ -47,30 +48,38 @@ module.exports =
         // also, assigning default to non mentioned or even mentioned ones
 
         // first global
-        console.log( globalCDJSON )
-        console.log( userCDJSON )
+        
+        Object.keys(globalCDJSON).forEach( each =>
+            {
+                globalCommandCooldowns[each] = timeStringToMS(globalCDJSON[each])
+            })
+        
+        Object.keys(userCDJSON).forEach( each =>
+            {
+                userCommandCooldowns[each] = timeStringToMS(userCDJSON[each])
+            })
 
-        console.log( timeStringToMS( '1s' ))
+        
     },
 
     addGlobalCommandCooldown: function( cmd, cd )
     {
-
+        // globalCommandCooldowns[cmd] = timeStringToMS(cd)
     },
 
     addUserCommandCooldown: function( user, cmd, cd )
     {
-        
+        // userCommandCooldowns[cmd] = timeStringToMS(cd)
     },
 
     getGlobalCommandCooldown: function( cmd )
     {
-
+        // return globalCommandCooldowns[cmd]
     },
 
     getUserCommandCooldown: function( user, cmd )
     {
-        
+        // return userCommandCooldowns
     },
 
     removeGlobalCommandCooldown: function( cmd )
@@ -81,6 +90,16 @@ module.exports =
     removeUserCommandCooldown: function( user, cmd )
     {
 
+    },
+
+    isCommandOnGlobalCooldown: function( cmd )
+    {
+
+    },
+
+    isCommandOnUserCooldown: function( cmd, id )
+    {
+        
     }
 }
 
