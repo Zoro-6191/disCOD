@@ -18,8 +18,9 @@
   "homepage": "https://github.com/Zoro-6191/disCOD#readme",
   "dependencies": {
     "@arbytez/cod4-rcon-commands": "^0.1.1",
+    "colors": "^1.4.0",
     "comment-json": "^4.1.1",
-    "discord": "^0.8.2",
+    "discord.js": "^13.1.0",
     "node-fetch": "^2.6.1",
     "promise-mysql": "^5.0.3"
   }
