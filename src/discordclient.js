@@ -35,8 +35,10 @@ module.exports =
 
         client.once( 'ready', ()=> {
             logTime()
-            eventhandler.bot.emit('discordclient_ready')
+            eventhandler.bot.emit('ready')
         } )
+
+        module.exports.client = client
     }
 }
 

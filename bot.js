@@ -15,6 +15,7 @@ const maps = require('./utils/maps')
 const gametypes = require('./utils/gametypes')
 const cooldownmanager = require('./src/cooldownmanager')
 const discordclient = require('./src/discordclient')
+const commandhandler = require('./src/commandhandler')
 
 eventhandler.init()
 conf.init()
@@ -30,4 +31,9 @@ eventhandler.bot.once('database_ready', ()=>
 
     // now connect to discord?
     discordclient.init()
+})
+
+eventhandler.bot.once( 'ready', ()=>
+{
+    commandhandler.letsgo()
 })
