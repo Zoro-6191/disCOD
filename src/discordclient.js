@@ -30,8 +30,7 @@ module.exports =
             ]
         })
 
-        client.login( conf.discord_token )
-        // console.log( bot )
+        client.login( conf.mainconfig.discord_token )
 
         client.once( 'ready', ()=> {
             logTime()

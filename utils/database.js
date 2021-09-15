@@ -86,6 +86,8 @@ function checkConfigEntries( mysqldb )
 // check if things are correct, then emit a global event
 async function DBExistsGoAhead()
 {
+	const mainconfig = require.main.require('./conf').mainconfig
+
 	var currentTables = []
 
 	// update database in pool
@@ -111,7 +113,7 @@ async function DBExistsGoAhead()
 				return createTable()
 			}
 			else for( i=0; i< result.length; i++ )	// some tables exist
-				currentTables[i] = result[i].Tables_in_codbot
+				currentTables[i] = result[i]['Tables_in_'+mainconfig.mysqldb.database]
 
 			if( currentTables.includes('discord') )
 				return eventhandler.bot.emit('database_ready')
