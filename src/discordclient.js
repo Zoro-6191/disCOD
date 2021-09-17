@@ -5,10 +5,15 @@ const conf = require.main.require('./conf')
 const eventhandler = require.main.require('./src/eventhandler')
 require('colors')
 
+var prefix, themeColor
+
 module.exports = 
 {
     init: function()
     {
+        prefix = conf.mainconfig.command.prefix
+        themeColor = conf.mainconfig.themeColor
+
         var client = new Discord.Client({ 
             intents: 
             [
