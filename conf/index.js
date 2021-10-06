@@ -32,6 +32,19 @@ module.exports.init = function()
         ErrorHandler.fatal(`Incorrect JSON Syntax found in file: ${mainConfPath}\n${e}`)
     }
 
+    // cmdlevel cjson
+    try
+    {
+        const cmdlevel = cjson.parse(fs.readFileSync('./conf/conf_cmdlevel.json').toString())
+        this.cmdlevel = cmdlevel
+        if( DetailedDebug )
+            console.log(`Parsed ${cmdlevel}\nExported cmdlevel`)
+    }
+    catch(e)
+    {
+        ErrorHandler.fatal(`Incorrect JSON Syntax found in file: './conf/conf_cmdlevel.json'\n${e}`)
+    }
+
     // check debug mode
     var debugvar = this.mainconfig.debug
     if( typeof debugvar == 'boolean' )

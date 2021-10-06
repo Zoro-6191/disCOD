@@ -3,7 +3,7 @@ const { MessageEmbed } = require('discord.js')
 const conf = require.main.require('./conf')
 const db = require.main.require('./utils/database')
 
-const description = `Unmask a Player`
+const description = `Fetch GUID of a Player`
 var prefix, themeColor, usage
 
 module.exports =
@@ -14,14 +14,13 @@ module.exports =
         prefix = conf.mainconfig.command.prefix
         themeColor = conf.mainconfig.themeColor
 
-        usage = `${prefix}unmask @Mention/B3 ID`
+        usage = `${prefix}guid @Mention/B3 ID`
         module.exports.usage = usage
     },
 
     callback: async function( msg, args, cmder )
     {
-        var Entry
-
+        // args can be nothing, @player, b3 id
         if( !args.length )
             Entry = cmder.id
         else Entry = await db.getPlayerID( args[0] )
@@ -42,37 +41,26 @@ module.exports =
             } )
 
         if( args == null )
-            return 
-            
-        const result = await db.pool.query(`SELECT * FROM clients WHERE id=${Entry}`)
-            .catch( err =>
+            return
+
+        const result = await db.pool.query(`SELECT name,guid FROM clients WHERE id=${Entry}`)
+            .catch( err => 
             {
                 msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('There was an Error while processing your command') ]})
                 ErrorHandler.fatal(err)
             })
 
-        if( result[0].mask_level < 1 )
-        {
-            if( Entry == cmder.id )
-                return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`You aren't Masked`) ]})
-            else if( args[0].startsWith('<@!') )         
-                return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`${args[0]} isn't Masked`) ]})
-            else return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`**${result[0].name}** isn't Masked`) ]})
-        }
+        Entry = result[0].guid
+        
+        const embed = new MessageEmbed()
+            .setColor( themeColor )
+        
+        if( Entry == cmder.guid || Entry == cmder.id ) // issued cmd without args or smth
+            embed.setDescription(`Your GUID: **__${cmder.guid}__**, ${msg.author}`)
+        else if( args[0].startsWith('<@!') )
+            embed.setDescription(`${args[0]}'s GUID: **__${Entry}__**`)
+        else embed.setDescription(`**${result[0].name}**'s GUID: **__${Entry}__**`)
 
-        db.pool.query(`UPDATE clients SET mask_level=0 WHERE id=${Entry}`)
-            .catch( err =>
-            {
-                msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('There was an Error while processing your command') ]})
-                ErrorHandler.fatal(err)
-            })
-            .then( ()=>
-            {
-                if( Entry == cmder.id )
-                    return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`Unmasked`) ]})
-                else if( args[0].startsWith('<@!'))
-                    return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`Unmaked ${args[0]}`) ]})
-                else return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`Unmasked **${result[0].name}**`) ]})
-            })
+        return msg.reply( { embeds: [embed]} )
     }
 }

@@ -1,21 +1,4 @@
-dm:ffa
-dm:deathmatch
-dm:freeforall
-dm:free-for-all
-dm:free for all
-tdm:teamdeathmatch
-tdm:team-deathmatch
-tdm:team-death-match
-tdm:team deathmatch
-tdm:team death match
-tdm:war
-sd:searchanddestroy
-sd:search and destroy
-sd:search&destroy
-sd:search & destroy
-sd:snd
-sr:searchandrescue
-sr:search and rescue
-sr:search&rescue
-sr:search & rescue
-sr:snr
+dm:Deathmatch
+war:Team Deathmatch
+sd:Search and destroy
+sr:Search and Rescue

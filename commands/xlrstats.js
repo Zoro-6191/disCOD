@@ -3,7 +3,7 @@ const { MessageEmbed } = require('discord.js')
 const conf = require.main.require('./conf')
 const db = require.main.require('./utils/database')
 
-const description = `Unmask a Player`
+const description = `Fetch Player's XLR Stats`
 var prefix, themeColor, usage
 
 module.exports =
@@ -14,13 +14,13 @@ module.exports =
         prefix = conf.mainconfig.command.prefix
         themeColor = conf.mainconfig.themeColor
 
-        usage = `${prefix}unmask @Mention/B3 ID`
+        usage = `${prefix}xlrstats @Mention/B3 ID`
         module.exports.usage = usage
     },
 
     callback: async function( msg, args, cmder )
     {
-        var Entry
+        var Entry 
 
         if( !args.length )
             Entry = cmder.id
@@ -40,39 +40,55 @@ module.exports =
                 }
                 args = null
             } )
-
+        
         if( args == null )
-            return 
-            
-        const result = await db.pool.query(`SELECT * FROM clients WHERE id=${Entry}`)
-            .catch( err =>
+            return
+
+        const zz = await db.pool.query(`SELECT name FROM clients WHERE id=${Entry}`)
+            .catch( err => 
             {
                 msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('There was an Error while processing your command') ]})
                 ErrorHandler.fatal(err)
             })
 
-        if( result[0].mask_level < 1 )
+        var Name = zz[0].name
+
+        const result = await db.pool.query(`SELECT * FROM xlr_playerstats WHERE client_id=${Entry}`)
+            .catch( err => 
+            {
+                msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('There was an Error while processing your command') ]})
+                ErrorHandler.fatal(err)
+            })
+
+        if( result[0] == undefined )
         {
             if( Entry == cmder.id )
-                return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`You aren't Masked`) ]})
-            else if( args[0].startsWith('<@!') )         
-                return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`${args[0]} isn't Masked`) ]})
-            else return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`**${result[0].name}** isn't Masked`) ]})
+                return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`You haven't registered yet\nIn-game Command: **__!register__**`) ]})
+            else return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`${args[0].startsWith('<@!')?args[0]:'**'+Name+'**'} hasn't registered yet\nIn-game Command: **__!register__**`) ]})
         }
 
-        db.pool.query(`UPDATE clients SET mask_level=0 WHERE id=${Entry}`)
-            .catch( err =>
+        const embed = new MessageEmbed()
+            .setColor(themeColor)
+            .addField(`Kills`, `${result[0].kills}`, true)
+            .addField(`Deaths`, `${result[0].deaths}`, true)
+            .addField(`Assists`, `${result[0].assists}`, true)
+            .addField(`KDR`, `${result[0].ratio}`, true)
+            .addField(`Rounds Player`, `${result[0].rounds}`, true)
+            .addField(`Max Killstreak`, `${result[0].winstreak}`, true)
+
+        if( Entry == cmder.id )
+            embed.setTitle(`Your XLR Stats`)
+        else
+        {
+            embed.setTitle(`XLR Stats for __${Name}__ @${Entry}`)
+            if( args[0] != undefined && !args[0].startsWith('<@!') )
             {
-                msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('There was an Error while processing your command') ]})
-                ErrorHandler.fatal(err)
-            })
-            .then( ()=>
-            {
-                if( Entry == cmder.id )
-                    return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`Unmasked`) ]})
-                else if( args[0].startsWith('<@!'))
-                    return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`Unmaked ${args[0]}`) ]})
-                else return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`Unmasked **${result[0].name}**`) ]})
-            })
+                const zz = await db.pool.query(`SELECT dc_id FROM discod WHERE b3_id=${Entry}`)
+                if( zz.length )
+                    embed.setDescription(`<@!${zz[0].dc_id}>`)
+                else embed.setDescription(`${Name} hasn't linked to disCOD yet`)
+            }
+        }
+        return msg.reply( { embeds: [embed]} )
     }
 }

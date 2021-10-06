@@ -3,7 +3,7 @@ const { MessageEmbed } = require('discord.js')
 const conf = require.main.require('./conf')
 const db = require.main.require('./utils/database')
 
-const description = `Take Screenshot of a Player`
+const description = `Get a list of latest penalties a Player got by other admins`
 var prefix, themeColor, usage
 
 module.exports =
@@ -14,7 +14,7 @@ module.exports =
         prefix = conf.mainconfig.command.prefix
         themeColor = conf.mainconfig.themeColor
 
-        usage = `${prefix}getss <slot>`
+        usage = `${prefix}penalties @Mention/B3 ID`
         module.exports.usage = usage
     },
 

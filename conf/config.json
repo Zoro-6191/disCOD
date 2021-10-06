@@ -2,11 +2,19 @@
     // general bot settings
     "discord_token": "",
 
+    // general theme color, used in embeds etc
+    // default: #696969 :)
+    "themeColor": "#696969",
+
     // debug mode: print excessive information to the console.
     "debug": false,
     
     // server timezone
     "timezone": "IST",
+
+    "chat_prefix": "",
+
+    "chat_prefix_pm": "",
     
     // cmd settings
     "command": 
@@ -46,7 +54,7 @@
     "server": 
     {
         // if your server is on same pc as this bot, just use "localhost" or "127.0.0.1"
-        "rcon_ip": "localhost",
+        "rcon_ip": "snr.vfesports.in",
 
         // default cod4 port: 28960
         "port": 28960,
@@ -61,10 +69,27 @@
     // codbot/b3 database
     "mysqldb": 
     {
-        "host": "localhost",
+        "host": "snr.vfesports.in",
         "port": 3306,   // default: 3306
-        "user": "root", // avoid root whenever possible
+        "user": "user", // avoid root whenever possible
         "password": "password",
-        "database": "codbot"
+        "database": "database"
+    },
+
+    "msgs":
+    {
+        "rules":
+        {
+            "r1": "",
+            "r2": "",
+            "r3": "",
+            "r4": "",
+            "r5": "",
+            "r6": "",
+            "r7": "",
+            "r8": "",
+            "r9": "",
+            "r10": ""
+        }
     }
 }

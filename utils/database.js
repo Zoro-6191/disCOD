@@ -38,20 +38,61 @@ module.exports =
 				user: mysqldb.user,
 				password: mysqldb.password,
 				database: mysqldb.database
-			}).then( ()=> DBExistsGoAhead() )
+			})
+			.then( ()=> DBExistsGoAhead() )
 			.catch( async (err) => 
-				{
-					if( err.code == 'ECONNREFUSED' )
-						ErrorHandler.fatal( `MySQL Server refused connection.\nThis means the MySQL server is either down or has blocked this IP Address.` )
-					else ErrorHandler.fatal( `MySQL ERROR:\n${err.sqlMessage}` )
-				})
+			{
+				if( err.code == 'ECONNREFUSED' )
+					ErrorHandler.fatal( `MySQL Server refused connection.\nThis means the MySQL server is either down or has blocked this IP Address.` )
+				else ErrorHandler.fatal( `MySQL ERROR:\n${err.sqlMessage}` )
+			})
 		
 		this.keepAlive();
     },
 
+	getPlayerID: async function( arg )
+	{
+		return new Promise( async (resolve,reject) => 
+		{
+			if( arg.startsWith('<@!') )
+			{
+				// check if discod table has that discord id
+				// if has resolve, else reject
+				arg = arg.split('<@!')[1].split('>')[0]
+				
+				const result = await pool.query(`SELECT b3_id FROM discod WHERE dc_id=${arg}`)
+					.catch(reject)
+
+				if( result.length )
+					resolve( result[0].b3_id )
+				else reject( 'NO_LINK' )
+			}
+			else 
+			{
+				if( arg.startsWith('@') )
+					arg = arg.split('@')[1]
+
+				if( isNaN(arg) || arg < 1 )
+            		reject('BAD_ENTRY')
+				else if( arg == '1' ) 
+					reject('WORLD_ID')
+				else
+				{
+					const result = await pool.query(`SELECT name FROM clients WHERE id=${arg}`)
+						.catch(reject)
+
+					if( result.length )
+						resolve(arg)
+
+					else reject( 'NO_RESULT' )
+				} 
+			}
+		})
+	},
+
     reconnect: function()
     {
-
+		
     },
 
     keepAlive: async function()
@@ -102,20 +143,20 @@ async function DBExistsGoAhead()
 
 	pool = module.exports.pool
 
-	// now to check if our table(discord) exists
+	// now to check if our table(discod) exists
 	pool.query( `SHOW TABLES`, async (err, result)=> 
 		{
 			if( err )
 				ErrorHandler.fatal(err)
 			else if( result.length == 0 ) // no tables exist
 			{
-				console.log(`Required table "discord" doesn't exist.\nCreating`)
+				console.log(`Required table "discod" doesn't exist.\nCreating`)
 				return createTable()
 			}
 			else for( i=0; i< result.length; i++ )	// some tables exist
 				currentTables[i] = result[i]['Tables_in_'+mainconfig.mysqldb.database]
 
-			if( currentTables.includes('discord') )
+			if( currentTables.includes('discod') )
 				return eventhandler.bot.emit('database_ready')
 			else return createTable()
 		} )
@@ -123,13 +164,13 @@ async function DBExistsGoAhead()
 
 function createTable()
 {
-	// read /src/discord.sql, parse it and query it
-	var template = fs.readFileSync(`./src/sql/discord.sql`,'utf-8')
+	// read /src/discod.sql, parse it and query it
+	var template = fs.readFileSync(`./src/sql/discod.sql`,'utf-8')
 
 	pool.query( template )
 		.then( ()=>
 		{
-			console.log(`Created Table: "discord"`)
+			console.log(`Created Table: "discod"`)
 			eventhandler.bot.emit('database_ready')
 		})
 		.catch( err => ErrorHandler.fatal(err) )

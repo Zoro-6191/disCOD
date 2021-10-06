@@ -31,7 +31,8 @@ module.exports.groupOperations =
     KeywordToName,
     LevelToBits,
     LevelToKeyword,
-    LevelToName
+    LevelToName,
+    isValidToken,
 }
 
 async function createGlobalGroups( queryResult )
@@ -123,7 +124,7 @@ function KeywordToBits( token )
 {
     token = token.toLowerCase()
 
-    var obj = globalGroups.find( obj => obj.keyword == keyword )
+    var obj = globalGroups.find( obj => obj.keyword == token )
 
     if( obj == undefined )
         return undefined
@@ -159,4 +160,15 @@ function LevelToBits( level )
         return undefined
 
     return obj.bits
+}
+
+function isValidToken( token )
+{
+    token = token.toLowerCase()
+
+    for( var i=0; i<globalGroups.length; i++ )
+        if( globalGroups[i].keyword == token )
+            return true
+
+    return false
 }

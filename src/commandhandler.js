@@ -5,6 +5,8 @@ const eventhandler = require.main.require('./src/eventhandler')
 const discordclient = require.main.require('./src/discordclient')
 const fs = require('fs')
 const conf = require.main.require('./conf')
+const db = require.main.require('./utils/database')
+const { BitsToLevel, LevelToName } = require.main.require('./utils/groupmanager').groupOperations
 
 var prefix, themeColor
 var availableCommands = []
@@ -37,54 +39,6 @@ module.exports.letsgo = function()
 
 async function commandHandler( msg )
 {
-    // <ref *1> Message {
-    //     channelId: '625336821005680652',
-    //     guildId: '549934207518900230',
-    //     deleted: false,
-    //     id: '887994081144365086',
-    //     type: 'DEFAULT',
-    //     system: false,
-    //     content: 'test',
-    //     author: User {
-    //       id: '415138654416273408',
-    //       bot: false,
-    //       system: false,
-    //       flags: UserFlags { bitfield: 0 },
-    //       username: 'Zoro',
-    //       discriminator: '6191',
-    //       avatar: '6257218a97f04aea6c735f09cfda4239'
-    //     },
-    //     pinned: false,
-    //     tts: false,
-    //     nonce: '887993941545189376',
-    //     embeds: [],
-    //     components: [],
-    //     attachments: Collection(0) [Map] {},
-    //     stickers: Collection(0) [Map] {},
-    //     createdTimestamp: 1631784687077,
-    //     editedTimestamp: null,
-    //     reactions: ReactionManager { message: [Circular *1] },
-    //     mentions: MessageMentions {
-    //       everyone: false,
-    //       users: Collection(0) [Map] {},
-    //       roles: Collection(0) [Map] {},
-    //       _members: null,
-    //       _channels: null,
-    //       crosspostedChannels: Collection(0) [Map] {},
-    //       repliedUser: null
-    //     },
-    //     webhookId: null,
-    //     groupActivityApplication: null,
-    //     applicationId: null,
-    //     activity: null,
-    //     flags: MessageFlags { bitfield: 0 },
-    //     reference: null,
-    //     interaction: null
-    //   }
-
-    if( msg.guild === null )    // guessing this is supposed to be DM.
-        return msg.author.send(new MessageEmbed().setColor(themeColor).setTitle(`GTFO my DM fucking creep`)).catch(error=>{})
-
     var content = msg.content
 
     if( !content.length || !content.startsWith(prefix) || msg.author.bot )
@@ -103,22 +57,48 @@ async function commandHandler( msg )
     if( !cmd.length || bypassedcommands.includes(cmd) )
         return
 
+    msg.channel.sendTyping()
+        .catch( console.log(`Discord preventing sendTyping() as a security measure`) )
+
     if( !availableCommands.includes(cmd) )
+        return msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setTitle(`Unknown Command **__${prefix}${cmd}__**`) ] } )
+
+    // check if cmdlevel json file has our command defined
+    if( conf.cmdlevel[cmd] == undefined )
     {
-        const emb = new MessageEmbed().setColor(themeColor).setTitle(`Unknown Command **__${prefix}${cmd}__**`)
-        msg.reply( { embeds: [emb] } )
-        return
+        msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setTitle(`There was an error processing your command.`) ] } )
+        return ErrorHandler.minor(`Command Level not defined for command '${cmd}'\nEdit './conf/conf_cmdlevel.json' to fix this.`)
     }
-        
 
     // check whether cmder has permission for cmd here
+    const result = await db.pool.query( `SELECT clients.*,discod.linked FROM discod,clients WHERE dc_id=${msg.author.id} AND clients.id=discod.b3_id` )
+        .catch( err=>
+        {
+            msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setTitle(`There was an error processing your command.`) ] } )
+            ErrorHandler.fatal(err)
+        })
 
+    if( conf.cmdlevel[cmd] )
+    {
+        if( !result.length )    // not linked
+            return msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setTitle(`You haven't linked your B3 ID to disCOD yet.`).setDescription(`Type **__${prefix}link @(your B3ID)__** to link your account.\nDM any admin for help.`) ] })
 
+        if( result[0].linked == '0' )    // not linked
+            return msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setTitle(`You haven't validated link yet`).setDescription(`Check DM to validate your account link.\nDM any admin for help.`) ] })
+
+        // check clients' power
+        var level = BitsToLevel( result[0].group_bits )
+
+        if( level < conf.cmdlevel[cmd] )
+            return msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setTitle(`You don't have enough power to use **__${prefix}${cmd}__**`).setDescription(`You need to be atleast ${LevelToName(conf.cmdlevel[cmd])} [${conf.cmdlevel[cmd]}]`) ] })
+    }
+   
     // check for cooldown here
 
 
     // forward to module
-    require.main.require(`./commands/${cmd}`).callback( msg, args )
+    console.log(`Command: ${content} by ${msg.author.tag}`)
+    require.main.require(`./commands/${cmd}`).callback( msg, args, result[0] )
 
     eventhandler.bot.emit( 'command', cmd, args )
 }

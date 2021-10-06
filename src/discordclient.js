@@ -32,7 +32,8 @@ module.exports =
                 'GUILD_PRESENCES',
                 'GUILD_VOICE_STATES',
                 'GUILD_WEBHOOKS'
-            ]
+            ],
+            partials: ['MESSAGE', 'CHANNEL', 'REACTION']
         })
 
         client.login( conf.mainconfig.discord_token )

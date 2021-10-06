@@ -14,9 +14,5 @@ module.exports.initRcon = async function()
 
     module.exports.rcontool = rcontool
 
-    var zz = await rcontool.execRconCmd('rcon_password')
-
-    console.log(zz)
-    
     console.log("Initialized: Rcon UDP JS Library by arbytez")
 }

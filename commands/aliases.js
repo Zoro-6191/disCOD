@@ -1,69 +1,71 @@
 const ErrorHandler = require.main.require('./src/errorhandler')
+const { MessageEmbed } = require('discord.js')
 const conf = require.main.require('./conf')
+const db = require.main.require('./utils/database')
 
-var prefix, themeColor
+const description = `Check Player's In-game Aliases`
+var prefix, themeColor, usage
 
 module.exports =
 {
-    name: 'aliases',
-    description: 'Check in game aliases of @player',
-    usage: `${prefix}aliases @B3ID`,
-
+    description,
     init: async function()
     {
         prefix = conf.mainconfig.command.prefix
         themeColor = conf.mainconfig.themeColor
+
+        usage = `${prefix}aliases @Mention/B3 ID`
+        module.exports.usage = usage
     },
 
     callback: async function( msg, args )
     {
         if( !args.length )
-            return msg.channel.send( new Discord.MessageEmbed().setColor( themeColor ).setTitle('You need to include B3 @ID of a player.'))
+            return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('You need to include B3 @ID of a player.') ]})
 
-        let Entry = args[0].toString()
-        
-        if( Entry.startsWith('@'))
-            Entry = Entry.split('@')[1]
-        
-        if( isNaN(Entry) )
-            return msg.channel.send( new Discord.MessageEmbed().setColor( themeColor ).setTitle('Invalid Entry'))
+        const Entry = await db.getPlayerID( args[0] )
+            .catch( err => 
+            {
+                if( err == 'NO_LINK' )
+                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`${args[0]} hasn't linked their account yet`) ]})
+                else if( err == 'BAD_ENTRY' )
+                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('Invalid Entry') ]})
+                else if( err == 'WORLD_ID' )
+                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`ID @1 is Classified`) ]})
+                else 
+                {
+                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('There was an Error while processing your command') ]})
+                    ErrorHandler.fatal(err)
+                }
+                args = null
+            } )
 
-        let lastName = "", titleString = ""
-        let MaskLevel
+        if( args == null )
+            return
 
-        var sql = `SELECT alias FROM aliases WHERE client_id = ${parseInt(Entry)}`
-        var sql1 = `SELECT name,mask_level FROM clients WHERE id = ${parseInt(Entry)}`
+        const result = await db.pool.query( `SELECT clients.name,clients.mask_level,aliases.alias FROM clients,aliases WHERE clients.id = ${parseInt(Entry)} AND aliases.client_id=clients.id` )
+            .catch( err => 
+            {
+                ErrorHandler.minor( err )
+                return msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setDescription('There was an Error while processing your command') ] } )
+            })
 
-        b3db.query( sql1, ( err, result )=>
-        {
-            if( err || result[0] === undefined )
-                titleString = `Aliases of @${Entry}`
-            else titleString = `__${result[0].name}__'s Aliases (@${Entry})`
-            lastName = result[0].name
-            MaskLevel = result[0].mask_level
-        })
+        if( result[0] === undefined )
+            return msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setDescription('There was an Error while processing your command') ] } )
 
-        b3db.query( sql, ( err, result )=> 
-        {
-            if( err || result[0] === undefined )
-                return msg.channel.send( new Discord.MessageEmbed().setColor(themeColor).setTitle('There was an error processing your command.'))
+        var aliasString = ""
 
-            // console.log( JSON.stringify(result) );    // for [object Object]
+        for( var zz of result )
+            aliasString += `${zz.alias}, `
 
-            let aliasString = ""
+        if( aliasString.length > 1975 )     // embed descriptions limit 2000chars
+            aliasString = aliasString.slice(0,1975) + ' ...__**[and more]**__'
 
-            for( let zz of result )
-                aliasString += `${zz.alias}, `
+        const embed = new MessageEmbed()
+            .setColor( themeColor )
+            .setTitle( `__${result[0].name}__'s Aliases (@${Entry})` )
+            .setDescription( `${(result[0].mask_level>0)? result[0].name:aliasString}` )
 
-            if( aliasString.length > 1975 )     // embed descriptions limit 2000chars
-                aliasString = aliasString.slice(0,1975) + ' ... __**[and more]**__'
-
-            const embed = new Discord.MessageEmbed()
-                .setColor( themeColor )
-                .setTitle( titleString )
-                .setDescription( `${(MaskLevel>0)? lastName:aliasString}` )
-
-            msg.channel.send( embed )
-        });
+        msg.reply( { embeds: [embed] } )
     }
 }

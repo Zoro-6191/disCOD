@@ -3,7 +3,7 @@ const { MessageEmbed } = require('discord.js')
 const conf = require.main.require('./conf')
 const db = require.main.require('./utils/database')
 
-const description = `Take Screenshot of a Player`
+const description = 'Demote a Player'
 var prefix, themeColor, usage
 
 module.exports =
@@ -14,11 +14,13 @@ module.exports =
         prefix = conf.mainconfig.command.prefix
         themeColor = conf.mainconfig.themeColor
 
-        usage = `${prefix}getss <slot>`
+        usage = `${prefix}makereg @Mention/B3 ID`
         module.exports.usage = usage
+
+        // check for demotion table and create if no exist
     },
 
-    callback: async function( msg, args )
+    callback: async function( msg, args, cmder )
     {
 
     }
