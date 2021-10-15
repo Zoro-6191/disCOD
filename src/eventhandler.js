@@ -1,7 +1,6 @@
-// only botwide events ig
-// like command, error etc
+require('rootpath')()
 const events = require('events')
-const ErrorHandler = require.main.require('./src/errorhandler')
+const ErrorHandler = require('src/errorhandler')
 
 var bot
 

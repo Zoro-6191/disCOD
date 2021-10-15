@@ -1,8 +1,9 @@
-const ErrorHandler = require.main.require('./src/errorhandler')
+require('rootpath')()
+const ErrorHandler = require('src/errorhandler')
 const { MessageEmbed } = require('discord.js')
-const conf = require.main.require('./conf')
-const db = require.main.require('./utils/database')
-const groupManager = require.main.require('./utils/groupmanager')
+const conf = require('conf')
+const db = require('utils/database')
+const groupManager = require('utils/groupmanager')
 
 const description = ``
 var prefix, themeColor, usage

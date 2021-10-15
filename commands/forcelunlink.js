@@ -1,5 +1,6 @@
-const ErrorHandler = require.main.require('./src/errorhandler')
-const conf = require.main.require('./conf')
+require('rootpath')()
+const ErrorHandler = require('src/errorhandler')
+const conf = require('conf')
 
 var prefix, themeColor
 

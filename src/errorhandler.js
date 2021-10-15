@@ -1,4 +1,5 @@
 // this module takes care of exceptions
+require('rootpath')()
 const { exit } = require('process')
 
 module.exports = 

@@ -1,9 +1,10 @@
 // this module will take care of b3/codbot database connection
+require('rootpath')()
 const fs = require('fs')
 const mysql = require('promise-mysql')
 const { exit } = require('process')
-const eventhandler = require.main.require('./src/eventhandler')
-const ErrorHandler = require.main.require('./src/errorhandler')
+const eventhandler = require('src/eventhandler')
+const ErrorHandler = require('src/errorhandler')
 
 var pool, aliveLoop
 
@@ -14,7 +15,7 @@ module.exports =
 
     init: async function()
     {
-        const mainconfig = require.main.require('./conf').mainconfig
+        const mainconfig = require('conf').mainconfig
 		
 		mysqldb = mainconfig.mysqldb
 
@@ -127,7 +128,7 @@ function checkConfigEntries( mysqldb )
 // check if things are correct, then emit a global event
 async function DBExistsGoAhead()
 {
-	const mainconfig = require.main.require('./conf').mainconfig
+	const mainconfig = require('conf').mainconfig
 
 	var currentTables = []
 

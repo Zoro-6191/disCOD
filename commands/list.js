@@ -1,9 +1,10 @@
-const ErrorHandler = require.main.require('./src/errorhandler')
+require('rootpath')()
+const ErrorHandler = require('src/errorhandler')
 const { MessageEmbed } = require('discord.js')
-const conf = require.main.require('./conf')
-const db = require.main.require('./utils/database')
-const { BitsToName } = require.main.require('./utils/groupmanager').groupOperations
-const rcon = require.main.require('./utils/rcontool')
+const conf = require('conf')
+const db = require('utils/database')
+const { BitsToName } = require('utils/groupmanager').groupOperations
+const rcon = require('utils/rcontool')
 
 const description = `Get a list of online players`
 var prefix, themeColor, usage, public_ip

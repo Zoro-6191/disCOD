@@ -1,7 +1,8 @@
-const ErrorHandler = require.main.require('./src/errorhandler')
+require('rootpath')()
+const ErrorHandler = require('src/errorhandler')
 const { MessageEmbed } = require('discord.js')
-const conf = require.main.require('./conf')
-const db = require.main.require('./utils/database')
+const conf = require('conf')
+const db = require('utils/database')
 
 const description = `Check Player's In-game Aliases`
 var prefix, themeColor, usage

@@ -1,7 +1,8 @@
 // this module initializes configs
+require('rootpath')()
 const cjson = require('comment-json')
 const fs = require('fs')
-const ErrorHandler = require('../src/errorhandler')
+const ErrorHandler = require('src/errorhandler')
 
 const DetailedDebug = false
 

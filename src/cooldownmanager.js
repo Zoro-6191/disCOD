@@ -1,7 +1,8 @@
 // this module handles all cooldowns
+require('rootpath')()
 const cjson = require('comment-json')
 const fs = require('fs')
-const ErrorHandler = require.main.require('./src/errorhandler')
+const ErrorHandler = require('src/errorhandler')
 
 // for local use, just storing basic cooldown time values
 var globalCommandCooldowns = [], userCommandCooldowns = []

@@ -1,8 +1,9 @@
-const ErrorHandler = require.main.require('./src/errorhandler')
+require('rootpath')()
+const ErrorHandler = require('src/errorhandler')
 const { MessageEmbed } = require('discord.js')
-const conf = require.main.require('./conf')
-const db = require.main.require('./utils/database')
-const rcontool = require.main.require('./utils/rcontool')
+const conf = require('conf')
+const db = require('utils/database')
+const rcontool = require('utils/rcontool')
 
 const description = `Saybold text In-game`
 var prefix, themeColor, usage

@@ -1,9 +1,10 @@
-const ErrorHandler = require.main.require('./src/errorhandler')
+require('rootpath')()
+const ErrorHandler = require('src/errorhandler')
 const fetch = require('node-fetch')
 const { MessageEmbed } = require('discord.js')
-const conf = require.main.require('./conf')
-const db = require.main.require('./utils/database')
-const { BitsToName } = require.main.require('./utils/groupmanager').groupOperations
+const conf = require('conf')
+const db = require('utils/database')
+const { BitsToName } = require('utils/groupmanager').groupOperations
 
 const description = `Fetch complete information about a Player`
 var prefix, themeColor, usage

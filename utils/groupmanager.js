@@ -1,7 +1,8 @@
 // this module takes care of admin groups
+require('rootpath')()
 const fs = require('fs')
-const db = require.main.require('./utils/database')
-const ErrorHandler = require.main.require('./src/errorhandler')
+const db = require('utils/database')
+const ErrorHandler = require('src/errorhandler')
 
 // for local use
 var globalGroups, highestLevel

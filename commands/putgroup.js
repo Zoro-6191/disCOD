@@ -1,8 +1,9 @@
-const ErrorHandler = require.main.require('./src/errorhandler')
+require('rootpath')()
+const ErrorHandler = require('src/errorhandler')
 const { MessageEmbed } = require('discord.js')
-const conf = require.main.require('./conf')
-const db = require.main.require('./utils/database')
-const groupManager = require.main.require('./utils/groupmanager')
+const conf = require('conf')
+const db = require('utils/database')
+const groupManager = require('utils/groupmanager')
 
 const description = `Change Group of a Player`
 var prefix, themeColor, usage
@@ -30,7 +31,7 @@ module.exports =
         if( !args.length )
             return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setTitle(`Invalid Entry`).setDescription(`Usage: ${usage}`) ]})
 
-        const { isValidToken, BitsToName, KeywordToBits } = require.main.require('./utils/groupmanager').groupOperations
+        const { isValidToken, BitsToName, KeywordToBits } = require('utils/groupmanager').groupOperations
 
         const Entry = await db.getPlayerID( args[0] )
             .catch( err => 

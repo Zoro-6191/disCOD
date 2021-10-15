@@ -1,8 +1,9 @@
-const ErrorHandler = require.main.require('./src/errorhandler')
+require('rootpath')()
+const ErrorHandler = require('src/errorhandler')
 const { MessageEmbed } = require('discord.js')
-const conf = require.main.require('./conf')
-const db = require.main.require('./utils/database')
-const { BitsToName, BitsToLevel } = require.main.require('./utils/groupmanager').groupOperations
+const conf = require('conf')
+const db = require('utils/database')
+const { BitsToName, BitsToLevel } = require('utils/groupmanager').groupOperations
 
 const description = `Check admin level of a Player`
 var prefix, themeColor, usage, highestLevel
@@ -18,7 +19,7 @@ module.exports =
         usage = `${prefix}leveltest @Mention/B3 ID`
         module.exports.usage = usage
 
-        highestLevel = require.main.require('./utils/groupmanager').highestLevel
+        highestLevel = require('utils/groupmanager').highestLevel
     },
 
     callback: async function( msg, args, cmder )

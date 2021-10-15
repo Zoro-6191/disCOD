@@ -1,8 +1,9 @@
 // this module connects to discord
-const ErrorHandler = require.main.require('./src/errorhandler')
+require('rootpath')()
+const ErrorHandler = require('src/errorhandler')
 const Discord = require('discord.js')
-const conf = require.main.require('./conf')
-const eventhandler = require.main.require('./src/eventhandler')
+const conf = require('conf')
+const eventhandler = require('src/eventhandler')
 require('colors')
 
 var prefix, themeColor

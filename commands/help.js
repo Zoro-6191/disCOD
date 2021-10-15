@@ -1,7 +1,8 @@
-const ErrorHandler = require.main.require('./src/errorhandler')
+require('rootpath')()
+const ErrorHandler = require('src/errorhandler')
 const { MessageEmbed } = require('discord.js')
-const conf = require.main.require('./conf')
-const db = require.main.require('./utils/database')
+const conf = require('conf')
+const db = require('utils/database')
 
 const description = `Get a list of commands available to you or request info about any command`
 var prefix, themeColor, usage

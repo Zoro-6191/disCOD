@@ -1,8 +1,9 @@
-const ErrorHandler = require.main.require('./src/errorhandler')
+require('rootpath')()
+const ErrorHandler = require('src/errorhandler')
 const fetch = require('node-fetch')
 const { MessageEmbed } = require('discord.js')
-const conf = require.main.require('./conf')
-const db = require.main.require('./utils/database')
+const conf = require('conf')
+const db = require('utils/database')
 
 const description = `Get Player's Internet Service Provider's name`
 var prefix, themeColor, usage

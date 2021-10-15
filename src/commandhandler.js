@@ -1,12 +1,13 @@
 // this module will look for user commands
+require('rootpath')()
 const {MessageEmbed} = require('discord.js')
-const ErrorHandler = require.main.require('./src/errorhandler')
-const eventhandler = require.main.require('./src/eventhandler')
-const discordclient = require.main.require('./src/discordclient')
+const ErrorHandler = require('src/errorhandler')
+const eventhandler = require('src/eventhandler')
+const discordclient = require('src/discordclient')
 const fs = require('fs')
-const conf = require.main.require('./conf')
-const db = require.main.require('./utils/database')
-const { BitsToLevel, LevelToName } = require.main.require('./utils/groupmanager').groupOperations
+const conf = require('conf')
+const db = require('utils/database')
+const { BitsToLevel, LevelToName } = require('utils/groupmanager').groupOperations
 
 var prefix, themeColor
 var availableCommands = []
