@@ -29,9 +29,9 @@ module.exports =
         rcontool.rcontool.screensay(`^5[disCOD] ^2${cmder.name}^7: ${str}`)
             .then( () => msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`Message Sent`) ]}) )
             .catch( err => 
-                {
-                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`There was an error processing your command`) ]})
-                    ErrorHandler.fatal(err)
-                })
+            {
+                msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`There was an error processing your command`) ]})
+                ErrorHandler.fatal(err)
+            })
     }
 }

@@ -58,7 +58,11 @@ async function commandHandler( msg )
         return
 
     msg.channel.sendTyping()
-        .catch( console.log(`Discord preventing sendTyping() as a security measure`) )
+        .catch( err => 
+        {
+            console.error(err)
+            console.log(`Discord preventing sendTyping() as a security measure`) 
+        })
 
     if( !availableCommands.includes(cmd) )
         return msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setTitle(`Unknown Command **__${prefix}${cmd}__**`) ] } )

@@ -102,7 +102,7 @@ module.exports =
 
         const embed = new MessageEmbed()
             .setColor(themeColor)
-            .setTitle(`__${player.name}__ @${player.id}`)
+            .setTitle(`__${player.name}__ @${Entry}`)
             // .setURL('@')
             .setDescription(`__Aliases:__ ${aliasString}`)
             .addField('First Joined',`${new Date(player.time_add * 1000).toLocaleString("en-US", { dateStyle: 'full', timeZone: conf.mainconfig.timezone } )}`,true)

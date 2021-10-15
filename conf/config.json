@@ -60,7 +60,7 @@
         "port": 28960,
 
         // rcon pass must be accurate, case sensitive
-        "rcon_password": "rconpass",
+        "rcon_password": "rconpassword",
 
         // domain name works too. eg: "143.110.191.162" or "snr.vfesports.in"
         "public_ip": "snr.vfesports.in"
@@ -69,7 +69,7 @@
     // codbot/b3 database
     "mysqldb": 
     {
-        "host": "snr.vfesports.in",
+        "host": "localhost",
         "port": 3306,   // default: 3306
         "user": "user", // avoid root whenever possible
         "password": "password",
@@ -80,16 +80,9 @@
     {
         "rules":
         {
-            "r1": "",
-            "r2": "",
-            "r3": "",
-            "r4": "",
-            "r5": "",
-            "r6": "",
-            "r7": "",
-            "r8": "",
-            "r9": "",
-            "r10": ""
+            "r1": "No Elevators, Punishable by Tempban",
+            "r2": "No WH, Aimbot or Triggerbot, Punishable by Permban",
+            "r3": "No Misuse of Admin Powers, Punishable by permanent demotion"
         }
     }
 }
