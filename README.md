@@ -2,17 +2,26 @@
 Source for hosting your own discord bot for your public server.
 
 ## **Features**
-- Extremely light weight
+- Extremely light weight (runs perfectly fine in my singlecore 1GB RAM VPS along with Cod4x server and B3)
+- Tested for months
 - Supports custom plugins
-- Easy to understand config
+- Easy to understand and edit config
 - Players can `!link` their b3 id to disCOD and can have most commands operated via Discord
+- Preinstalled plugin includes [Screenshot Uploading Plugin]()(https://user-images.githubusercontent.com/52291201/148685552-e16c55d8-68fd-4866-830b-90e2138546e4.png)
+
 
 ## **Commands**
 - Type `!help` to get a complete list of commands.<br>
 - Type `!help <command>` to know how to use a command
 
 ## **Screenshots**
+![image](https://user-images.githubusercontent.com/52291201/148685462-a2935821-9ea4-40ac-8f47-d6996b072446.png)
+![image](https://user-images.githubusercontent.com/52291201/148685398-a12088eb-6d80-4fa0-827f-2c0d20c370fc.png)
+![image](https://user-images.githubusercontent.com/52291201/148685476-f014c7eb-1ea5-4f5c-8136-7ee58be9c431.png)
+![image](https://user-images.githubusercontent.com/52291201/148685803-dc869ef6-e99a-4f86-b422-578c8e8caa0c.png)
 
+
+See it in action at [[v.F] Discord Server](https://discord.gg/vgK6G4eG3N)
 
 # How to Install
 
