@@ -21,6 +21,8 @@ module.exports =
 
     callback: async function( msg, args, cmder )
     {
+        const embed = new MessageEmbed().setColor(themeColor)
+        
         // args can be nothing, @player, b3 id
         if( !args.length )
             Entry = cmder.id
@@ -28,34 +30,32 @@ module.exports =
             .catch( err => 
             {
                 if( err == 'NO_LINK' )
-                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`${args[0]} hasn't linked their account yet`) ]})
+                    msg.reply( { embeds: [ embed.setDescription(`${args[0]} hasn't linked their account yet`) ]})
                 else if( err == 'BAD_ENTRY' )
-                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setTitle(`Invalid Entry`).setDescription(`Usage: ${usage}`) ]})
+                    msg.reply( { embeds: [ embed.setTitle(`Invalid Entry`).setDescription(`Usage: ${usage}`) ]})
                 else if( err == 'WORLD_ID' )
-                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`ID @1 is Classified`) ]})
+                    msg.reply( { embeds: [ embed.setDescription(`ID @1 is Classified`) ]})
+                else if( err == 'NO_RESULT' )
+                    msg.reply( { embeds: [ embed.setDescription(`No Player Found`) ]})
                 else 
                 {
-                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('There was an Error while processing your command') ]})
+                    msg.reply( { embeds: [ embed.setDescription('There was an Error while processing your command') ]})
                     ErrorHandler.fatal(err)
                 }
-                args = null
             } )
 
-        if( args == null )
+        if( Entry == undefined )
             return
 
         const result = await db.pool.query(`SELECT name,guid FROM clients WHERE id=${Entry}`)
             .catch( err => 
             {
-                msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('There was an Error while processing your command') ]})
+                msg.reply( { embeds: [ embed.setDescription('There was an Error while processing your command') ]})
                 ErrorHandler.fatal(err)
             })
 
         Entry = result[0].guid
-        
-        const embed = new MessageEmbed()
-            .setColor( themeColor )
-        
+
         if( Entry == cmder.guid || Entry == cmder.id ) // issued cmd without args or smth
             embed.setDescription(`Your GUID: **__${cmder.guid}__**, ${msg.author}`)
         else if( args[0].startsWith('<@!') )

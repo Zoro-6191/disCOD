@@ -1,0 +1,12 @@
+// this plugin uploads screenshots to any discord channel, and deletes them from local machine
+{
+    "enabled": true,
+
+    // channel id of channel to send screenshots in
+    "channel_id": "1234564879342075",
+
+    "screenshot_folder_path": "/path/to/cod/screenshots",
+
+    // default: #87ceeb
+    "embed_color": "#87ceeb"
+}

@@ -7,7 +7,7 @@ const { BitsToName } = require('utils/groupmanager').groupOperations
 const rcon = require('utils/rcontool')
 
 const description = `Get a list of online players`
-var prefix, themeColor, usage, public_ip
+var prefix, themeColor, usage
 
 module.exports =
 {
@@ -23,58 +23,86 @@ module.exports =
 
     callback: async function( msg, args )
     {
+		const embed = new MessageEmbed().setColor(themeColor)
 		const rconStatus = await rcon.rcontool.rconStatus()
 		players = rconStatus.onlinePlayers
 
 		if(!rconStatus.online)
-			return msg.reply( {embeds:[new MessageEmbed().setColor(themeColor).setTitle(`Server currently offline`)]} )
-		
-		let guidStr = ""
-		for(i=0;i<players.length;i++)
+			return msg.reply( {embeds:[embed.setTitle(`Server currently offline`)]} )
+
+		if( !players.length )
+			result = []
+		else
 		{
-			guidStr += players[i].id
-			if( i < players.length-1 )
-				guidStr += ','
+			let guidStr = ""
+			for(i=0;i<players.length;i++)
+				guidStr += players[i].id + ','
+
+			guidStr=guidStr.substring(0, guidStr.length - 1);
+
+			result = await db.pool.query( `SELECT * FROM clients WHERE guid IN(${guidStr})`)
+				.catch( err =>
+				{
+					msg.reply( { embeds: [ embed.setDescription('There was an Error while processing your command') ]})
+					ErrorHandler.fatal(err)
+				})
 		}
-
-		const result = await db.pool.query( `SELECT * FROM clients WHERE guid IN(${guidStr})`)
-            .catch( err =>
-                {
-
-                })
-        
-        const embed = new MessageEmbed()
-            .setColor(themeColor)
-            .setThumbnail(`https://cdn.discordapp.com/attachments/719492117294088252/832286558488100884/cod4logo.png`)
+		        
+        embed.setThumbnail(`https://cdn.discordapp.com/attachments/719492117294088252/832286558488100884/cod4logo.png`)
             .setURL('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
             .setTitle(`${removeColor(rconStatus.sv_hostname)} (${players.length}/${rconStatus.sv_maxclients})`)
             .setDescription( `Map: ${await processMapName(rconStatus.mapname)} (${await processGametype(rconStatus.g_gametype)})
                 Server Uptime: ${rconStatus.uptime}\n` )
                 
-        obj = assignID(players,result);
+        obj = assignID(players,result)
+
+		if( !players.length )
+			linQ = []
+		else
+		{
+			// check for discod table links
+			var idStr = ''
+			for( var i = 0; i < obj.length; i++ )
+				if( obj[i].id != undefined && obj[i].id != '' && !obj[i].mask_level )	// dont want masked ppl here
+					idStr += obj[i].id+','
+			idStr = idStr.substring(0, idStr.length - 1);
+
+			linQ = await db.pool.query(`SELECT b3_id,dc_id FROM discod WHERE b3_id IN(${idStr})`)
+				.catch( err =>
+				{
+					msg.reply( { embeds: [ embed.setDescription('There was an Error while processing your command') ]})
+					ErrorHandler.fatal(err)
+				})
+		}
+
+		for( var i = 0; i < linQ.length; i++ )
+			for( var j = 0; j < obj.length; j++ )
+				if( linQ[i].b3_id == obj[j].id )
+					obj[j].dc_id = linQ[i].dc_id
+
         for( i=0; i<24; i++ )   // embed addfield limit is 25
             if( players[i] != undefined )
             {
                 player = players[i]
-                embed.addField(`(${player.num}) __${player.name}__ @${obj[i].id}`, `Score: ${player.score} Ping: ${player.ping} Power: ${processGroupBits(obj[i].group_bits,obj[i].mask_level)}`, true )
+                embed.addField(`(${player.num}) __${player.name}__ @${obj[i].id}`, `${obj[i].dc_id==undefined?'':'<@'+obj[i].dc_id+'>\n'}Power: ${processGroupBits(obj[i].group_bits,obj[i].mask_level)}`, true )
             }
 
         const embed2 = new MessageEmbed()
             .setColor(themeColor)
-            .setFooter(`/connect snr.vfesports.in`)
+            .setFooter(`/connect ${conf.mainconfig.server.public_ip}`)
         
         if( players.length > 24 )
             for( i=24; i<players.length; i++ )
             {
                 player = players[i]
-                embed2.addField(`(${player.num}) __${player.name}__ @${obj[i].id}`, `Score: ${player.score} Ping: ${player.ping} Power: ${processGroupBits(obj[i].group_bits,obj[i].mask_level)}`, true )
+                embed2.addField(`(${player.num}) __${player.name}__ @${obj[i].id}`, `${obj[i].dc_id==undefined?'':'\n<@'+obj[i].dc_id+'>\n'}Power: ${processGroupBits(obj[i].group_bits,obj[i].mask_level)}`, true )
             }
-        else embed.setFooter(`/connect snr.vfesports.in`)
+        else embed.setFooter(`/connect ${conf.mainconfig.server.public_ip}`)
 
-        msg.reply({embeds:[embed]})
+        msg.channel.send({embeds:[embed]})
 
         if( players.length > 24 )
-            msg.reply({embeds:[embed2]})
+            msg.channel.send({embeds:[embed2]})
     }
 }
 

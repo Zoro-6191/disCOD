@@ -31,19 +31,22 @@ module.exports =
                 if( err == 'NO_LINK' )
                     msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`${args[0]} hasn't linked their account yet`) ]})
                 else if( err == 'BAD_ENTRY' )
-                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setTitle(`Invalid Entry`).setDescription(`Usage: ${usage}`) ]})
+                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setTitle(`Invalid Entry`).setDescription(`Usage: ${module.exports.usage}`) ]})
+                else if( err == 'MENTIONED_BOT' )
+                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('Why are you mentioning a Bot bro :D?') ]})
                 else if( err == 'WORLD_ID' )
                     msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`ID @1 is Classified`) ]})
+                else if( err == 'NO_RESULT' )
+                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`No Player Found`) ]})
                 else 
                 {
                     msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('There was an Error while processing your command') ]})
                     ErrorHandler.fatal(err)
                 }
-                args = null
             } )
-
-        if( args == null )
-            return 
+        
+        if( Entry == undefined )
+            return
             
         const result = await db.pool.query(`SELECT * FROM clients WHERE id=${Entry}`)
             .catch( err =>

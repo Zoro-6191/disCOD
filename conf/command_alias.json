@@ -23,5 +23,6 @@
     "putgroup": [ "pg" ],
     "rules": [ "r" ],
     "scream": [ "scr" ],
+    "source": [ "sourcecode", "git", "github" ],
     "xlrstats": [ "xlr" ]
 }

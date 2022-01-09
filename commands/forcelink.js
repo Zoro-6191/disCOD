@@ -3,6 +3,7 @@ const ErrorHandler = require('src/errorhandler')
 const { MessageEmbed } = require('discord.js')
 const conf = require('conf')
 const db = require('utils/database')
+const eventhandler = require('src/eventhandler')
 
 const description = `Directly link a Discord ID to In-game ID`
 var prefix, themeColor, usage
@@ -21,8 +22,10 @@ module.exports =
 
     callback: async function( msg, args )
     {
+        const embed = new MessageEmbed().setColor(themeColor)
+
         if( !args.length || args[1] == undefined )
-            return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setTitle('Invalid Entry').setDescription(`Usage: ${usage}`) ]})
+            return msg.reply( { embeds: [ embed.setTitle('Invalid Entry').setDescription(`Usage: ${usage}`) ]})
 
         let User = msg.mentions.users.first()
         let Entry = args[1].toString()
@@ -31,16 +34,16 @@ module.exports =
             Entry = Entry.split('@')[1]
         
         if( isNaN(Entry) || parseInt(Entry) < 1 )
-            return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setTitle('Invalid Entry').setDescription(`Usage: ${usage}`) ]})
+            return msg.reply( { embeds: [ embed.setTitle('Invalid Entry').setDescription(`Usage: ${usage}`) ]})
 
         if( Entry == '1' )
-            return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('ID @1 is off limits') ]})
+            return msg.reply( { embeds: [ embed.setDescription('ID @1 is off limits') ]})
 
         // now we check if guy's id exists
         const result = await db.pool.query( `SELECT * FROM discod WHERE b3_id = ${Entry} OR dc_id = ${User.id}`)
             .catch( error=>
             {
-                msg.reply( {embeds:[new MessageEmbed().setColor( themeColor ).setDescription('There was an error processing your command')]} )
+                msg.reply( {embeds:[embed.setDescription('There was an error processing your command')]} )
                 ErrorHandler.fatal(error)
             })
 
@@ -49,39 +52,39 @@ module.exports =
         else if( parseInt(result[0].linked) === 0 ) // initiated before but not verified
             alterRow( msg, Entry, User )
         else if( parseInt(result[0].linked) === 1 ) // initiated and verified
-            return msg.reply( {embeds:[new MessageEmbed().setColor(themeColor).setDescription(`Link already exists.`)]})
+            return msg.reply( {embeds:[ embed.setDescription(`Link already exists.`)]})
     }
 }
 
 async function firstLink( msg, Entry, User )
 {
+    const embed = new MessageEmbed().setColor(themeColor)
     const discordId = User.id
-    const discordTag = User.tag
+    const discordTag = User.tag.replace(`'`, '').replace('`', '').replace('"','')   // replace coz query cant include quotes
     const pass = Math.floor(Math.random() * 100000000)    // 8 digit numerical pass, good enough
     
-    const createRow = `INSERT INTO discod(b3_id,dc_id,dc_tag,pass,linked,linktime) VALUES (${Entry},${discordId},'${discordTag}',${pass},1,UNIX_TIMESTAMP());`
+    const createRow = `INSERT INTO discod(b3_id,dc_id,dc_tag,pass,linked,linktime,time_add) VALUES (${Entry},${discordId},'${discordTag}',${pass},1,UNIX_TIMESTAMP(),UNIX_TIMESTAMP());`
 
     await db.pool.query( createRow )
         .catch( error =>
         {
-            msg.guild.author.send({embeds:[new MessageEmbed().setColor(themeColor).setDescription(`Error in firstLink() while linking.`)]})
-            msg.reply({embeds: [new MessageEmbed().setColor(themeColor).setDescription(`Error occured while force creating link.`)]})
+            msg.reply({embeds: [embed.setDescription(`Error occured while force creating link.`)]})
             ErrorHandler.fatal(error)
         })
 
-    const embed = new MessageEmbed()
-        .setColor(themeColor)
-        .setTitle(`Successfully Force Linked @${Entry}`)
+    embed.setTitle(`Successfully Force Linked @${Entry}`)
         .setThumbnail('https://cdn.discordapp.com/attachments/719492117294088252/833199125390295040/mmm.png')
         .setDescription(`${User}`)
 
     msg.reply({ embeds: [embed] })
+    
 }
 
 async function alterRow( msg, Entry, User )
 {
+    const embed = new MessageEmbed().setColor(themeColor)
 	const discordId = User.id
-    const discordTag = User.tag
+    const discordTag = User.tag.replace(`'`, '').replace('`', '').replace('"','')   // replace coz query cant include quotes
 
 	const updateRow = 
 	`UPDATE discod 
@@ -94,13 +97,11 @@ async function alterRow( msg, Entry, User )
 	await db.pool.query( updateRow )
         .catch( error =>
         {
-            msg.reply({embeds: [new MessageEmbed().setColor(themeColor).setDescription(`Error occured while force creating link.`)]})
+            msg.reply({embeds: [embed.setDescription(`Error occured while force creating link.`)]})
             ErrorHandler.fatal(error)
         })
 
-    const embed = new MessageEmbed()
-        .setColor(themeColor)
-        .setDescription(`Successfully Force Linked @${Entry}`)
+    embed.setDescription(`Successfully Force Linked @${Entry}`)
         .setThumbnail('https://cdn.discordapp.com/attachments/719492117294088252/833199125390295040/mmm.png')
         .setDescription(`${User}`)
 

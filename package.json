@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "COD4 Discord Bot",
   "main": "bot.js",
+  "engines": 
+  {
+    "node": "16.x"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -18,9 +22,12 @@
   "homepage": "https://github.com/Zoro-6191/disCOD#readme",
   "dependencies": {
     "@arbytez/cod4-rcon-commands": "^0.1.1",
+    "chokidar": "^3.5.2",
     "colors": "^1.4.0",
     "comment-json": "^4.1.1",
     "discord.js": "^13.1.0",
+    "fs-extra": "^10.0.0",
+    "image-size": "^1.0.0",
     "node-fetch": "^2.6.4",
     "promise-mysql": "^5.0.3",
     "rootpath": "^0.1.2"

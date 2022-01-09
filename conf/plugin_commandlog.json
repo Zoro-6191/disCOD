@@ -1,0 +1,9 @@
+// this plugin logs all commands into console and into discord channel
+{
+    "enabled": true,
+    
+    // log commands to channel of this ID
+    // make sure disCOD has access to send messages to this channel
+    // leave empty to log commands just to console
+    "channel_id": "670239100737159189"
+}

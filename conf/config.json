@@ -1,6 +1,6 @@
 {
     // general bot settings
-    "discord_token": "",
+    "discord_token": "abcdefgh",
 
     // general theme color, used in embeds etc
     // default: #696969 :)
@@ -54,13 +54,13 @@
     "server": 
     {
         // if your server is on same pc as this bot, just use "localhost" or "127.0.0.1"
-        "rcon_ip": "snr.vfesports.in",
+        "rcon_ip": "localhost",
 
         // default cod4 port: 28960
         "port": 28960,
 
         // rcon pass must be accurate, case sensitive
-        "rcon_password": "rconpassword",
+        "rcon_password": "rconpass",
 
         // domain name works too. eg: "143.110.191.162" or "snr.vfesports.in"
         "public_ip": "snr.vfesports.in"

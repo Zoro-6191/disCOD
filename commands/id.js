@@ -21,6 +21,7 @@ module.exports =
 
     callback: async function( msg, args, cmder )
     {
+        const embed = new MessageEmbed().setColor(themeColor)
         var Entry, Name
 
         // args can be nothing, @player, guid
@@ -29,40 +30,36 @@ module.exports =
         
         else
         {
-            if( args[0].startsWith('<@!') )
+            if( args[0].startsWith('<@') )
 			{
-				var potty = args[0].split('<@!')[1].split('>')[0]
+				var potty = args[0].match(/(\d+)/)[0]
 				
 				const result = await db.pool.query(`SELECT b3_id FROM discod WHERE dc_id=${potty}`)
 					.catch(ErrorHandler.fatal)
 
 				if( result.length )
                     Entry = result[0].b3_id
-				else return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`${args[0]} hasn't linked their account yet`) ]})
+				else return msg.reply( { embeds: [ embed.setDescription(`${args[0]} hasn't linked their account yet`) ]})
 			}
 			else
 			{
 				if( isNaN(args[0]) || args[0].length < 15 )
-					return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setTitle(`Invalid Entry`).setDescription(`Usage: ${usage}`) ]})
+					return msg.reply( { embeds: [ embed.setTitle(`Invalid Entry`).setDescription(`Usage: ${usage}`) ]})
 				else
                 {
-                    // query id from database
                     const result = await db.pool.query(`SELECT name,id FROM clients WHERE guid=${args[0]}`)
                         .catch( ErrorHandler.fatal )
 
                     if( !result.length )
-                        return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`GUID ${args[0]} doesn't exist in the database`) ]})
+                        return msg.reply( { embeds: [ embed.setDescription(`GUID ${args[0]} doesn't exist in the database`) ]})
                     
                     Entry = result[0].id
                     Name = result[0].name
                 }
 			}
         }
-
-        const embed = new MessageEmbed()
-            .setColor( themeColor )
         
-        if( Entry == cmder.guid || Entry == cmder.id ) // issued cmd without args or smth
+        if( Entry == cmder.guid || Entry == cmder.id )
             embed.setDescription(`Your B3 ID: **__@${cmder.id}__**, ${msg.author}`)
         else
         {

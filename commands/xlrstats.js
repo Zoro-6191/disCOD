@@ -31,18 +31,21 @@ module.exports =
                 if( err == 'NO_LINK' )
                     msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`${args[0]} hasn't linked their account yet`) ]})
                 else if( err == 'BAD_ENTRY' )
-                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setTitle(`Invalid Entry`).setDescription(`Usage: ${usage}`) ]})
+                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setTitle(`Invalid Entry`).setDescription(`Usage: ${module.exports.usage}`) ]})
+                else if( err == 'MENTIONED_BOT' )
+                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('Why are you mentioning a Bot bro :D?') ]})
                 else if( err == 'WORLD_ID' )
                     msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`ID @1 is Classified`) ]})
+                else if( err == 'NO_RESULT' )
+                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`No Player Found`) ]})
                 else 
                 {
                     msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('There was an Error while processing your command') ]})
                     ErrorHandler.fatal(err)
                 }
-                args = null
             } )
         
-        if( args == null )
+        if( Entry == undefined )
             return
 
         const zz = await db.pool.query(`SELECT name FROM clients WHERE id=${Entry}`)
@@ -73,8 +76,8 @@ module.exports =
             .addField(`Kills`, `${result[0].kills}`, true)
             .addField(`Deaths`, `${result[0].deaths}`, true)
             .addField(`Assists`, `${result[0].assists}`, true)
-            .addField(`KDR`, `${result[0].ratio}`, true)
-            .addField(`Rounds Player`, `${result[0].rounds}`, true)
+            .addField(`KDR`, `${parseFloat(result[0].ratio).toFixed(2)}`, true)
+            .addField(`Rounds Played`, `${result[0].rounds}`, true)
             .addField(`Max Killstreak`, `${result[0].winstreak}`, true)
 
         if( Entry == cmder.id )

@@ -5,7 +5,7 @@ const conf = require('conf')
 const db = require('utils/database')
 
 const description = `Get a list of Available Gametypes`
-var prefix, themeColor, usage
+var prefix, themeColor, usage, gametypeObj
 
 module.exports =
 {
@@ -17,10 +17,25 @@ module.exports =
 
         usage = `${prefix}gametypes`
         module.exports.usage = usage
+
+        gametypeObj = require('utils/gametypes').GlobalGametypes
     },
 
     callback: async function( msg, args )
     {
+        // get gametypes and print ez
+        var embed = new MessageEmbed().setColor(themeColor).setTitle(`Available Gametypes:`)
 
+        var descStr = `\n`
+
+        for( var i = 0; i < gametypeObj.length; i++ )
+        {
+            descStr += gametypeObj[i].name + ' - `' + gametypeObj[i].token +'`' 
+            descStr += `\n`
+        }
+
+        embed.setFooter(`Type !gametype <token> to change gametype`)
+
+        msg.reply( { embeds: [embed.setDescription(`${descStr}`)] } )
     }
 }

@@ -4,16 +4,14 @@ const {MessageEmbed} = require('discord.js')
 const ErrorHandler = require('src/errorhandler')
 const eventhandler = require('src/eventhandler')
 const discordclient = require('src/discordclient')
-const fs = require('fs')
 const conf = require('conf')
 const db = require('utils/database')
 const { BitsToLevel, LevelToName } = require('utils/groupmanager').groupOperations
 
 var prefix, themeColor
-var availableCommands = []
 var bypassedcommands = []
 
-module.exports.letsgo = function()
+module.exports.letsgo = async function()
 {
     // forward commands to modules after checking for conditions ig
 
@@ -21,21 +19,17 @@ module.exports.letsgo = function()
     themeColor = conf.mainconfig.themeColor
     bypassedcommands = conf.mainconfig.command.bypass
 
-    // get all file names in ./commands folder
-    availableCommands = fs.readdirSync('./commands/')
-
-    // call command init and remove .js
-    for( i=0; i < availableCommands.length; i++ )
+    // init commands
+    var cmd = conf.command
+    for( var i = 0; i < cmd.length; i++ )
     {
-        availableCommands[i] = availableCommands[i].split('.js')[0]
-        if( bypassedcommands.includes( availableCommands[i] ) )
-            continue
-        
-        require.main.require(`./commands/${availableCommands[i]}`).init()
+        if( !bypassedcommands.includes(cmd[i].name) )
+            await require(`commands/${cmd[i].name}`).init()
+                // .then( () => console.log(`Command Registered: `.green+cmd[i].name.yellow ) )
     }
 
     // begin
-    discordclient.client.on( 'messageCreate', async msg => commandHandler( msg ) )
+    discordclient.client.on( 'messageCreate', commandHandler )
 }
 
 async function commandHandler( msg )
@@ -61,17 +55,20 @@ async function commandHandler( msg )
     msg.channel.sendTyping()
         .catch( err => 
         {
-            console.error(err)
-            console.log(`Discord preventing sendTyping() as a security measure`) 
+            // console.error(err)
+            ErrorHandler.minor(`Discord preventing sendTyping() as a security measure`) 
         })
 
-    if( !availableCommands.includes(cmd) )
-        return msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setTitle(`Unknown Command **__${prefix}${cmd}__**`) ] } )
+    // time to get cmd object
+    const commandObj = conf.command.find( zz => zz.name == cmd || (zz.aliases != undefined && zz.aliases.includes(cmd)) )
+
+    if( commandObj == undefined )
+        return msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setDescription(`Unknown Command **${cmd}**`) ] } )
 
     // check if cmdlevel json file has our command defined
-    if( conf.cmdlevel[cmd] == undefined )
+    if( commandObj.minpower == undefined )
     {
-        msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setTitle(`There was an error processing your command.`) ] } )
+        msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setDescription(`There was an error processing your command.`) ] } )
         return ErrorHandler.minor(`Command Level not defined for command '${cmd}'\nEdit './conf/conf_cmdlevel.json' to fix this.`)
     }
 
@@ -79,11 +76,11 @@ async function commandHandler( msg )
     const result = await db.pool.query( `SELECT clients.*,discod.linked FROM discod,clients WHERE dc_id=${msg.author.id} AND clients.id=discod.b3_id` )
         .catch( err=>
         {
-            msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setTitle(`There was an error processing your command.`) ] } )
+            msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setDescription(`There was an error processing your command.`) ] } )
             ErrorHandler.fatal(err)
         })
 
-    if( conf.cmdlevel[cmd] )
+    if( commandObj.minpower > 0 )
     {
         if( !result.length )    // not linked
             return msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setTitle(`You haven't linked your B3 ID to disCOD yet.`).setDescription(`Type **__${prefix}link @(your B3ID)__** to link your account.\nDM any admin for help.`) ] })
@@ -94,8 +91,8 @@ async function commandHandler( msg )
         // check clients' power
         var level = BitsToLevel( result[0].group_bits )
 
-        if( level < conf.cmdlevel[cmd] )
-            return msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setTitle(`You don't have enough power to use **__${prefix}${cmd}__**`).setDescription(`You need to be atleast ${LevelToName(conf.cmdlevel[cmd])} [${conf.cmdlevel[cmd]}]`) ] })
+        if( level < commandObj.minpower )
+            return msg.reply( { embeds: [ new MessageEmbed().setColor(themeColor).setTitle(`You don't have enough power to use **__${prefix}${cmd}__**`).setDescription(`You need to be atleast ${LevelToName(commandObj.minpower)} [${commandObj.minpower}]`) ] })
     }
    
     // check for cooldown here
@@ -103,7 +100,8 @@ async function commandHandler( msg )
 
     // forward to module
     console.log(`Command: ${content} by ${msg.author.tag}`)
-    require.main.require(`./commands/${cmd}`).callback( msg, args, result[0] )
+    require(`commands/${commandObj.name}`).callback( msg, args, result[0] )
 
-    eventhandler.bot.emit( 'command', cmd, args )
+    // event command: command, arguments, commander
+    eventhandler.bot.emit( 'command', cmd, args, result[0] )
 }

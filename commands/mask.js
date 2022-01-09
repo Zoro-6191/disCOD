@@ -28,13 +28,15 @@ module.exports =
 
     callback: async function( msg, args, cmder )
     {
+        const embed = new MessageEmbed().setColor(themeColor)
+
         if( !args.length )
-            return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setTitle(`Invalid Entry`).setDescription(`Usage: ${usage}`) ]})
+            return msg.reply( { embeds: [ embed.setTitle(`Invalid Entry`).setDescription(`Usage: ${usage}`) ]})
 
         const { isValidToken, KeywordToBits, BitsToName } = groupManager.groupOperations
 
         if( !isValidToken(args[0].toLowerCase()) )
-            return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setTitle(`Invalid Token Provided`).setDescription(`Usage: ${usage}`) ]})
+            return msg.reply( { embeds: [ embed.setTitle(`Invalid Token Provided`).setDescription(`Usage: ${usage}`) ]})
 
         var Entry
 
@@ -44,20 +46,23 @@ module.exports =
             .catch( err => 
             {
                 if( err == 'NO_LINK' )
-                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`${args[1]} hasn't linked their account yet`) ]})
+                    msg.reply( { embeds: [ embed.setDescription(`${args[1]} hasn't linked their account yet`) ]})
                 else if( err == 'BAD_ENTRY' )
-                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setTitle(`Invalid Entry`).setDescription(`Usage: ${usage}`) ]})
+                    msg.reply( { embeds: [ embed.setTitle(`Invalid Entry`).setDescription(`Usage: ${module.exports.usage}`) ]})
+                else if( err == 'MENTIONED_BOT' )
+                    msg.reply( { embeds: [ embed.setDescription('Why are you mentioning a Bot bro :D?') ]})
                 else if( err == 'WORLD_ID' )
-                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`ID @1 is Classified`) ]})
+                    msg.reply( { embeds: [ embed.setDescription(`ID @1 is Classified`) ]})
+                else if( err == 'NO_RESULT' )
+                    msg.reply( { embeds: [ embed.setDescription(`No Player Found`) ]})
                 else 
                 {
-                    msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('There was an Error while processing your command') ]})
+                    msg.reply( { embeds: [ embed.setDescription('There was an Error while processing your command') ]})
                     ErrorHandler.fatal(err)
                 }
-                args = null
             } )
-
-        if( args == null )
+        
+        if( Entry == undefined )
             return
 
         args[0] = args[0].toLowerCase()
@@ -66,30 +71,30 @@ module.exports =
         const result = await db.pool.query(`SELECT * FROM clients WHERE id=${Entry}`)
             .catch( err =>
             {
-                msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('There was an Error while processing your command') ]})
+                msg.reply( { embeds: [ embed.setDescription('There was an Error while processing your command') ]})
                 ErrorHandler.fatal(err)
             })
 
         if( result[0].mask_level == maskbits )
         {
             if( Entry == cmder.id )
-                return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`You're already masked as ${BitsToName(maskbits)}`) ]})
-            else return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`**${result[0].name}** is already masked as **${BitsToName(maskbits)}**`) ]})
+                return msg.reply( { embeds: [ embed.setDescription(`You're already masked as ${BitsToName(maskbits)}`) ]})
+            else return msg.reply( { embeds: [ embed.setDescription(`**${result[0].name}** is already masked as **${BitsToName(maskbits)}**`) ]})
         }
 
         db.pool.query(`UPDATE clients SET mask_level=${maskbits} WHERE id=${Entry}`)
             .catch( err =>
             {
-                msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('There was an Error while processing your command') ]})
+                msg.reply( { embeds: [ embed.setDescription('There was an Error while processing your command') ]})
                 ErrorHandler.fatal(err)
             })
             .then( ()=>
             {
                 if( Entry == cmder.id )
-                    return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`Masked as **${BitsToName(maskbits)}**`) ]})
-                else if( args[1].startsWith('<@!'))
-                    return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`${args[1]} masked as **${BitsToName(maskbits)}**`) ]})
-                else return msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`**${result[0].name}** masked as **${BitsToName(maskbits)}**`) ]})
+                    return msg.reply( { embeds: [ embed.setDescription(`Masked as **${BitsToName(maskbits)}**`) ]})
+                else if( args[1].startsWith('<@'))
+                    return msg.reply( { embeds: [ embed.setDescription(`${args[1]} masked as **${BitsToName(maskbits)}**`) ]})
+                else return msg.reply( { embeds: [ embed.setDescription(`**${result[0].name}** masked as **${BitsToName(maskbits)}**`) ]})
             })
     }
 }

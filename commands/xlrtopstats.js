@@ -49,6 +49,27 @@ module.exports =
                 ErrorHandler.fatal(err)
             })
 
+        // check for discod table links
+		var idStr = ''
+		for( var i = 0; i < result.length; i++ )
+		{
+			if( result[i].id != undefined && result[i].id != '' )	// dont want masked ppl here
+				idStr += result[i].id
+			if( i < result.length-1 )
+				idStr += ','
+		}
+
+		const linQ = await db.pool.query(`SELECT b3_id,dc_id FROM discod WHERE b3_id IN(${idStr})`)
+			.catch( err =>
+			{
+				ErrorHandler.fatal(err)
+			})
+
+		for( var i = 0; i < linQ.length; i++ )
+			for( var j = 0; j < result.length; j++ )
+				if( linQ[i].b3_id == result[j].id )
+                    result[j].dc_id = linQ[i].dc_id
+
         const embed = new MessageEmbed()
             .setColor( themeColor )
             .setTitle( `XLR Top Stats`)
@@ -58,9 +79,9 @@ module.exports =
         {
             player = result[i]
             embed.addField( `${i+1}. __${player.name}__ @${player.id}` , 
-                `Skill: ${player.skill}
+                `${player.dc_id==undefined?'':' <@'+player.dc_id+'>\n'}Skill: ${player.skill}
                 K: ${player.kills} D: ${player.deaths}
-                K/D: ${player.ratio}` , true )
+                K/D: ${parseFloat(player.ratio).toFixed(2)}` , true )
         }
 
         return msg.reply( { embeds: [embed]} )

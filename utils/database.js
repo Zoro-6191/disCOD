@@ -2,9 +2,9 @@
 require('rootpath')()
 const fs = require('fs')
 const mysql = require('promise-mysql')
-const { exit } = require('process')
 const eventhandler = require('src/eventhandler')
 const ErrorHandler = require('src/errorhandler')
+const discordclient = require('src/discordclient')
 
 var pool, aliveLoop
 
@@ -28,7 +28,8 @@ module.exports =
 				host: mysqldb.host,
 				port: mysqldb.port,
 				user: mysqldb.user,
-				password: mysqldb.password
+				password: mysqldb.password,
+				charset : 'utf8mb4'
 			})
 		
 		// synchronous connection
@@ -38,7 +39,8 @@ module.exports =
 				port: mysqldb.port,
 				user: mysqldb.user,
 				password: mysqldb.password,
-				database: mysqldb.database
+				database: mysqldb.database,
+				charset : 'utf8mb4'
 			})
 			.then( ()=> DBExistsGoAhead() )
 			.catch( async (err) => 
@@ -55,46 +57,42 @@ module.exports =
 	{
 		return new Promise( async (resolve,reject) => 
 		{
-			if( arg.startsWith('<@!') )
+			if( arg.startsWith('<@') )
 			{
-				// check if discod table has that discord id
-				// if has resolve, else reject
-				arg = arg.split('<@!')[1].split('>')[0]
+				num = arg.match(/(\d+)/)[0]
+
+				// check if bot
+				if( num == discordclient?.client?.user?.id || (await discordclient.client.users?.fetch(num))?.bot )
+					reject( 'MENTIONED_BOT' )
 				
-				const result = await pool.query(`SELECT b3_id FROM discod WHERE dc_id=${arg}`)
+				const result = await pool.query(`SELECT b3_id FROM discod WHERE dc_id=${num} AND linked=1`)
 					.catch(reject)
 
 				if( result.length )
 					resolve( result[0].b3_id )
 				else reject( 'NO_LINK' )
 			}
-			else 
+			else
 			{
-				if( arg.startsWith('@') )
-					arg = arg.split('@')[1]
+				num = arg.match(/(\d+)/)
 
-				if( isNaN(arg) || arg < 1 )
+				if( num == undefined || num[0] < 1 )
             		reject('BAD_ENTRY')
-				else if( arg == '1' ) 
+				else if( num[0] == '1' ) 
 					reject('WORLD_ID')
 				else
 				{
-					const result = await pool.query(`SELECT name FROM clients WHERE id=${arg}`)
+					const result = await pool.query(`SELECT name FROM clients WHERE id=${num[0]}`)
 						.catch(reject)
 
 					if( result.length )
-						resolve(arg)
+						resolve(num[0])
 
 					else reject( 'NO_RESULT' )
 				} 
 			}
 		})
 	},
-
-    reconnect: function()
-    {
-		
-    },
 
     keepAlive: async function()
     {
@@ -139,7 +137,8 @@ async function DBExistsGoAhead()
 			port: mysqldb.port,
 			user: mysqldb.user,
 			password: mysqldb.password,
-			database: mysqldb.database
+			database: mysqldb.database,
+			charset : 'utf8mb4'
 		}).catch(err=>ErrorHandler.fatal(err)/* can it even get here */)
 
 	pool = module.exports.pool

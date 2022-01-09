@@ -8,4 +8,4 @@ CREATE TABLE discod(
         linktime INT(10) NOT NULL DEFAULT '0',
         time_add INT(10) NOT NULL DEFAULT '0',
         PRIMARY KEY ( id )
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;

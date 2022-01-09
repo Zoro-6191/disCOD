@@ -22,6 +22,7 @@ module.exports =
 
     callback: async function( msg, args, cmder )
     {
+        const embed = new MessageEmbed().setColor(themeColor)
         const rcon = rcontool.rcontool
 
         rcon.say(`^5[disCOD]: ^7Map Restarted by ^1${cmder.name} ^3@${cmder.id}`)
@@ -35,11 +36,11 @@ module.exports =
         rcon.map_restart()
             .then( ()=>
             {
-                msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription(`Successfully Restarted the Map`) ]})
+                msg.reply( { embeds: [ embed.setDescription(`Successfully Restarted the Map`) ]})
             })
             .catch( err =>
             {
-                msg.reply( { embeds: [ new MessageEmbed().setColor( themeColor ).setDescription('There was an Error while processing your command') ]})
+                msg.reply( { embeds: [ embed.setDescription('There was an Error while processing your command') ]})
                 ErrorHandler.fatal(err)
             })
     }
