@@ -7,7 +7,7 @@ Source for hosting your own discord bot for your public server.
 - Supports custom plugins
 - Easy to understand and edit config
 - Players can `!link` their b3 id to disCOD and can have most commands operated via Discord
-- Preinstalled plugin includes [Screenshot Uploading Plugin]()(https://user-images.githubusercontent.com/52291201/148685552-e16c55d8-68fd-4866-830b-90e2138546e4.png)
+- Preinstalled plugin includes [Screenshot Uploading Plugin](https://user-images.githubusercontent.com/52291201/148685552-e16c55d8-68fd-4866-830b-90e2138546e4.png)
 
 
 ## **Commands**
