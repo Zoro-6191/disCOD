@@ -46,6 +46,7 @@
     "penalties": 60,
     "permban": 80,
     "putgroup": 100,
+    "resolution": 20,
     "rules": 0,
     "say": 40,
     "scream": 40,

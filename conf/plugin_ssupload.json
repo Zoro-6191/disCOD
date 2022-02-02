@@ -3,10 +3,9 @@
     "enabled": true,
 
     // channel id of channel to send screenshots in
-    "channel_id": "1234564879342075",
+    "channel_id": "564756580692918282",
 
-    "screenshot_folder_path": "/path/to/cod/screenshots",
+    "screenshot_folder_path": "/root/vf-snr/porn/screenshots",
 
-    // default: #87ceeb
     "embed_color": "#87ceeb"
 }

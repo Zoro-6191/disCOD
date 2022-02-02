@@ -9,6 +9,7 @@ const ErrorHandler = require('src/errorhandler')
 const conf = require('conf')
 const db = require('utils/database')
 const discord = require('src/discordclient')
+const rcon = require('utils/rcontool')
 
 // vars for local use
 var pluginConfig
@@ -29,7 +30,7 @@ module.exports =
         if( pluginConfig.channel_id == "" )
             return ErrorHandler.minor(`"channel_id" in plugin config "./conf/plugin_ssupload.json" not defined. Plugin will not work.`) 
         else var ssChannel = await discord.client.channels.cache.get( pluginConfig.channel_id )
-
+        
         var ssfolderpath = pluginConfig.screenshot_folder_path
 
         if( ssfolderpath == "" )
@@ -40,12 +41,30 @@ module.exports =
 
         if( !ssfolderpath.endsWith('/'))
             ssfolderpath += '/'
+        
+        // check for reso table
+        const checkIfTableExists = await db.pool.query(`SHOW tables LIKE 'discod_reso'`)
+            .catch( ErrorHandler.fatal )
+        if( !checkIfTableExists.length )
+        {
+            ErrorHandler.minor(`Resolution table not found. Creating.`)
+
+            await db.pool.query(`CREATE TABLE discod_reso(
+                id INT NOT NULL AUTO_INCREMENT UNIQUE,
+                client_id INT UNIQUE NOT NULL,
+                reso VARCHAR(10) NOT NULL,
+                time_add INT(10) NOT NULL DEFAULT '0',
+                time_edit INT(10) NOT NULL DEFAULT '0',
+                PRIMARY KEY ( id )
+            ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;`)
+                .catch(ErrorHandler.fatal)
+        }
 
         const watcher = chokidar.watch(`${ssfolderpath}*.jpg`, { persistent: true })
 
         watcher.on( 'add', async path =>
         {
-            // wait few seconds
+            // wait a second
             await wait(1000)
 
             // process image metadata for ss and userinfo
@@ -56,8 +75,6 @@ module.exports =
 			
             const bytes = await fs.read(fd, buffer, 0, buffer.length, 0)
                 .catch( ErrorHandler.fatal )
-
-            // console.log(bytes);
 
             // [
                 // 0 '����',
@@ -81,12 +98,9 @@ module.exports =
             // ]
 
             var filename = path.split('/screenshots/')[1]
-            var ssTaker = filename.slice(0,(filename.length-11)) // _0000.jpg = 9chars
 
             var metaData = await buffer.slice(0, bytes.bytesRead).toString() //  to utf-8
-            // console.log(buffer);
             metaData = await metaData.split( '\x00' ) // spaces in utf-8
-
 
             var playername = metaData[11]
             var mapname = resolveMapName(metaData[10])
@@ -105,6 +119,35 @@ module.exports =
             
             b3id = result[0].id
 
+            // process ss taker
+            var filenameprocess = filename.split('_')
+            if( filenameprocess.length == 5 && filenameprocess[0] == "taker" && filenameprocess[1] == "slot" )
+            {
+                // "getss %s taker_id_%s_%s_" % (client.cid,taker.id,strr))
+                var uploadedVIAb3 = true
+                var takerSlotNum = parseInt(filenameprocess[2])
+
+                // check notify
+                if( filenameprocess[3] == "notify" )
+                    var notifyIngame = true;
+                else var notifyIngame = false;
+            }
+            else
+            {
+                var uploadedVIAb3 = false
+                var notifyIngame = false;
+            }
+            // ss taker process end
+
+            // log resolution here
+            const checkEntry = await db.pool.query(`SELECT * FROM discod_reso WHERE client_id=${b3id}`)
+                .catch(ErrorHandler.fatal)
+
+            if( checkEntry.length )
+                db.pool.query(`UPDATE discod_reso SET reso='${reso}',time_edit=UNIX_TIMESTAMP() WHERE client_id=${b3id}`)
+            else db.pool.query(`INSERT INTO discod_reso (client_id,reso,time_add,time_edit) VALUES (${b3id},'${reso}',UNIX_TIMESTAMP(),UNIX_TIMESTAMP())`)
+            // ==============================================
+
             const embed = new MessageEmbed()
                 .setColor(embed_color)
                 .setURL('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
@@ -120,9 +163,13 @@ module.exports =
             const file = new MessageAttachment(path)
 
             await ssChannel.send({ embeds: [embed], files: [file] })
-            
+
+            // notify ingame
+            if( uploadedVIAb3 && notifyIngame )
+                rcon.rcontool.tell( takerSlotNum, `Screenshot of ^2${playername} ^7has been uploaded to Discord` )
+
             // wrap up
-            console.log( 'Screenshot Sent'.green.bold + ' Player: ' + `${playername}`.cyan + ' Taken By: ' + `${ssTaker}`.cyan)
+            console.log( 'Screenshot Sent'.green.bold + ' Player: ' + `${playername}`.cyan)
             fs.close(fd)	// close filehand, frees resources
             await wait(5000)
             fs.unlinkSync(path)	// delete after 5seconds

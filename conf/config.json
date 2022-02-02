@@ -1,6 +1,6 @@
 {
     // general bot settings
-    "discord_token": "abcdefgh",
+    "discord_token": "ODgzODY3OTAyNDM5MTk4NzMw.YTQMIQ.T3rViIxS0Zp3DRtgHhBkr2v3F-o",
 
     // general theme color, used in embeds etc
     // default: #696969 :)
@@ -71,9 +71,9 @@
     {
         "host": "localhost",
         "port": 3306,   // default: 3306
-        "user": "user", // avoid root whenever possible
+        "user": "b3", // avoid root whenever possible
         "password": "password",
-        "database": "database"
+        "database": "b3"
     },
 
     "msgs":

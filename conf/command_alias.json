@@ -21,6 +21,7 @@
     "onlineadmins": [ "admins", "ad" ],
     "permban": [ "pb" ],
     "putgroup": [ "pg" ],
+    "resolution": [ "reso" ],
     "rules": [ "r" ],
     "scream": [ "scr" ],
     "source": [ "sourcecode", "git", "github" ],

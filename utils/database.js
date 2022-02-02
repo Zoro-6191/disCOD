@@ -53,6 +53,21 @@ module.exports =
 		this.keepAlive();
     },
 
+	processLeave: async function(member)
+	{
+		const id = member.user.id;
+
+		const check = await pool.query(`SELECT * FROM discod WHERE dc_id=${id}`)
+			.catch(ErrorHandler.fatal)
+
+		if( check.length )
+		{
+			await pool.query(`DELETE FROM discord WHERE dc_id=${id}`)
+				.catch(ErrorHandler.fatal)
+				.then(()=>console.log(`Removed ${member.user.tag} from database.`))
+		}
+	},
+
 	getPlayerID: async function( arg )
 	{
 		return new Promise( async (resolve,reject) => 

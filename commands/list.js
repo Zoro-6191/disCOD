@@ -84,7 +84,7 @@ module.exports =
             if( players[i] != undefined )
             {
                 player = players[i]
-                embed.addField(`(${player.num}) __${player.name}__ @${obj[i].id}`, `${obj[i].dc_id==undefined?'':'<@'+obj[i].dc_id+'>\n'}Power: ${processGroupBits(obj[i].group_bits,obj[i].mask_level)}`, true )
+                embed.addField(`(${player.num}) __${player.name}__ @${obj[i].id}`, `${obj[i].dc_id==undefined?'':'<@'+obj[i].dc_id+'>\n'}${processGroupBits(obj[i].group_bits,obj[i].mask_level)}`, true )
             }
 
         const embed2 = new MessageEmbed()
@@ -95,7 +95,7 @@ module.exports =
             for( i=24; i<players.length; i++ )
             {
                 player = players[i]
-                embed2.addField(`(${player.num}) __${player.name}__ @${obj[i].id}`, `${obj[i].dc_id==undefined?'':'\n<@'+obj[i].dc_id+'>\n'}Power: ${processGroupBits(obj[i].group_bits,obj[i].mask_level)}`, true )
+                embed2.addField(`(${player.num}) __${player.name}__ @${obj[i].id}`, `${obj[i].dc_id==undefined?'':'\n<@'+obj[i].dc_id+'>\n'}${processGroupBits(obj[i].group_bits,obj[i].mask_level)}`, true )
             }
         else embed.setFooter(`/connect ${conf.mainconfig.server.public_ip}`)
 

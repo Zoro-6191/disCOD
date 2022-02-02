@@ -4,6 +4,7 @@ const ErrorHandler = require('src/errorhandler')
 const Discord = require('discord.js')
 const conf = require('conf')
 const eventhandler = require('src/eventhandler')
+const db = require("utils/database")
 require('colors')
 
 var prefix, themeColor
@@ -42,6 +43,7 @@ module.exports =
         client.once( 'ready', ()=> {
             logTime()
             eventhandler.bot.emit('ready')
+            client.on( "guildMemberRemove", member => db.processLeave(member) )
         } )
 
         module.exports.client = client

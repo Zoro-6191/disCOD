@@ -40,6 +40,7 @@ module.exports =
                 OR penalties.type = "TempBan")
                 AND inactive = 0
                 AND penalties.client_id = target.id
+                AND clients.id IN (SELECT distinct(clients.id) FROM discod WHERE b3_id = clients.id AND linked=1)
                 AND ( penalties.time_expire = -1
                 OR penalties.time_expire > UNIX_TIMESTAMP(NOW()) ) )
         ORDER BY xlr_playerstats.skill DESC LIMIT 12`)
