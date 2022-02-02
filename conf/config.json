@@ -1,6 +1,6 @@
 {
     // general bot settings
-    "discord_token": "ODgzODY3OTAyNDM5MTk4NzMw.YTQMIQ.T3rViIxS0Zp3DRtgHhBkr2v3F-o",
+    "discord_token": "",
 
     // general theme color, used in embeds etc
     // default: #696969 :)
