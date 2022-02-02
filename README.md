@@ -1,5 +1,8 @@
 # disCOD
-Source for hosting your own discord bot for your public server.
+Source for hosting your own discord bot for your public server.</br>
+[disCOD B3 Plugin](https://github.com/jyotirmay-exe/b3-plugin-disCOD) is needed to be setup after you've launched the bot for first time. disCOD can run perfectly fine without it, but comes with lesser features without the b3 plugin.
+
+TO-DO: Need to internally standardize the bot so plugin development is easier, and need to update docs.
 
 ## **Features**
 - Extremely light weight (runs perfectly fine in my singlecore 1GB RAM VPS along with Cod4x server and B3)
@@ -7,6 +10,7 @@ Source for hosting your own discord bot for your public server.
 - Supports custom plugins
 - Easy to understand and edit config
 - Players can `!link` their b3 id to disCOD and can have most commands operated via Discord
+- Players need to link their account to have auto kill-based promotion
 - Preinstalled plugin includes [Screenshot Uploading Plugin](https://user-images.githubusercontent.com/52291201/148685552-e16c55d8-68fd-4866-830b-90e2138546e4.png)
 
 
