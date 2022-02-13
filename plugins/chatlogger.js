@@ -1,28 +1,54 @@
+//const fs = require('fs')
+const fs = require('fs-extra')
 const discord = require('src/discordclient')
-const fs = require('fs')
 const { MessageEmbed } = require('discord.js')
+const util = require('util')
 const conf = require('conf')
 const db = require('utils/database')
 const ErrorHandler = require('src/errorhandler')
-const util = require('util')
 
 module.exports =
 {
     init: async function()
     {
         pluginConfig = conf.plugin.chatlogger
+
         var statsUrl = pluginConfig.playerstatsLink
-        const content = pluginConfig.serverLog;
-        var embed_color = pluginConfig.embed_color
+
+        var content = pluginConfig.serverLog;
+
+        if (content == "") {
+           return ErrorHandler.minor(` Please specify the Server Logfile in plugin config "./conf/plugin_serverlog.json" Plugin will not work`)
+        } else if( !fs.existsSync(content) )
+        return ErrorHandler.minor(` "serverLog" in plugin config "./conf/plugin_chatlogger.json" defined incorrectly. ${content} doesn't exist. Plugin will not work.`)
+
+
+        if (pluginConfig.embed_color == "") {
+            var embed_color = conf.mainconfig.themeColor
+           return ErrorHandler.minor(`" embed_color" in plugin config "./conf/plugin_chatlogger.json" not defined. Using "${conf.mainconfig.themeColor}"`)
+        } else var embed_color = pluginConfig.embed_color
+
+        if( pluginConfig.channel_id == "" )
+            return ErrorHandler.minor(`" channel_id" in plugin config "./conf/plugin_chatlogger.json" not defined. Plugin will not work.`) 
+        else var logChannel = await discord.client.channels.cache.get( pluginConfig.channel_id )
+
+        if ( await discord.client.channels.cache.get(pluginConfig.channel_id) === undefined) {
+           return ErrorHandler.minor(` Specified "channel_id" in plugin config "./conf/plugin_chatlogger.json" does not exist. Plugin will not work`)
+        }
+
 
         fs.watchFile(content, async (eventType, filename) => {
             fs.readFile(content, 'utf-8', async (err, data) => {
 
-        logChannel = discord.client.channels.cache.get(pluginConfig.channel_id)
+        // display an error if file is not readable
+        if (err) {
+            return ErrorHandler.minor(`Error reading file ${content}`)
+        }
 
         let lines = data.trim().split("\n")
 
             lineToSend = lines[lines.length - 1]
+
 
             if (lineToSend.includes("say;") && !lineToSend.includes("QUICKMESSAGE")) {
 
@@ -30,12 +56,17 @@ module.exports =
 
                 b3id = await getB3ID(lineArray[1])
 
-                lineToSend = `**[${lineArray[3]}](${statsUrl}${b3id})** Said: ${lineArray[4].replace("", "").replace("", "")}`
+                var lineToSend = `**[${lineArray[3]}](${statsUrl}${b3id})** Said: ${lineArray[4].replace("", "").replace("", "")}`
+
+                if (statsUrl == "") {
+                    var lineToSend = `**[${lineArray[3]}](https://www.youtube.com/watch?v=dQw4w9WgXcQ)** Said: ${lineArray[4].replace("", "").replace("", "")}`
+                    ErrorHandler.minor(`"playerstatsLink" in plugin config "./conf/plugin_chatlogger.json" not defined. Using default Link.`)
+                }
 
                 const embed = new MessageEmbed()
                 .setColor(embed_color)
                 .setDescription(lineToSend)
-                .setFooter(`[Public Chat] GUID: ${lineArray[1].slice(11)} B3ID: @${b3id}`)
+                .setFooter({"text": `[Public Chat] | GUID: ${lineArray[1].slice(11)} | B3ID: @${b3id}`})
 
             logChannel.send({ embeds: [embed]})
 
@@ -45,15 +76,21 @@ module.exports =
 
                 b3id = await getB3ID(lineArray1[1])
 
-                lineToSend = `**[${lineArray1[3]}](${statsUrl}${b3id})** Said: ${lineArray1[4].replace("", "").replace("", "")}`
+                var lineToSend = `**[${lineArray1[3]}](${statsUrl}${b3id})** Said: ${lineArray1[4].replace("", "").replace("", "")}`
+
+                if (statsUrl == "") {
+                    var lineToSend = `**[${lineArray1[3]}](https://www.youtube.com/watch?v=dQw4w9WgXcQ)** Said: ${lineArray1[4].replace("", "").replace("", "")}`
+                    ErrorHandler.minor(`"playerstatsLink" in plugin config "./conf/plugin_chatlogger.json" not defined. Using default Link.`)
+                }
 
                 const embed2 = new MessageEmbed()
                 .setColor("#ff0000")
                 .setDescription(lineToSend)
-                .setFooter(`[Team Chat] GUID: ${lineArray1[1].slice(11)} B3ID: @${b3id}`)
+                .setFooter({"text": `[Team Chat] | GUID: ${lineArray1[1].slice(11)} | B3ID: @${b3id}`})
 
             logChannel.send({ embeds: [embed2]})
-                }
+
+            }
             });
         });
 

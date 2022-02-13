@@ -7,10 +7,12 @@
     "channel_id": "941920932908388414",
 
     // Path to your Mod logfile
-    "serverLog": "/home/cod4/server/cod4/Mods/^1early_^5noobs_^2v2.1.2/promod_mp.log",
+    "serverLog": "/home/cod4/server/cod4/Mods/pathToYour/promod_mp.log",
 
-    // Player Stats Website Link
-    "playerstatsLink": "https://xlr.earlynoobs.tk/index.php/1/player_stats/view/",
+    // Player Stats Website Link (Can be left blank)
+    // eg: https://yourdomain.com/index.php/1/player_stats/view/{bot will add b3id here}
+    // https://yourdomain.com/players.php?id={bot will add b3id here}
+    "playerstatsLink": "",
 
     "embed_color": "#87ceeb"
 }
