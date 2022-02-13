@@ -1,0 +1,18 @@
+// This Plugin Posts Server Chat Messages in Discord Channel
+
+{
+    "enabled": true,
+
+    // Channel you want to Post Chat Messages
+    "channel_id": "941920932908388414",
+
+    // Path to your Mod logfile
+    "serverLog": "/home/cod4/server/cod4/Mods/pathToYour/promod_mp.log",
+
+    // Player Stats Website Link (Can be left blank)
+    // eg: https://yourdomain.com/index.php/1/player_stats/view/{bot will add b3id here}
+    // https://yourdomain.com/players.php?id={bot will add b3id here}
+    "playerstatsLink": "",
+
+    "embed_color": "#87ceeb"
+}
