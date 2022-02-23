@@ -1,6 +1,8 @@
 import "json5/lib/register";
 import mainconfig from "./conf/config.json5";
 
+import {} from "discord.js";
+
 declare global 
 {
     type Command = {
@@ -43,7 +45,7 @@ export async function initCommandManager()
 
     const mainconfOps = mainconfig.command;
 
-    (global as any).prefix = mainconfOps.prefix;
+    globalThis.cmdPrefix = mainconfOps.prefix;
 
     Debug(`Prefix set to "${cmdPrefix}"`);
 }

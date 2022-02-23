@@ -16,7 +16,9 @@
       "typescript": "3.3.3333"
    },
    "dependencies": {
+      "@discordjs/rest": "^0.3.0",
       "chalk": "^4.1.2",
+      "discord-api-types": "^0.27.2",
       "discord.js": "^13.6.0",
       "figlet": "^1.5.2",
       "gradient-string": "^2.0.0",
