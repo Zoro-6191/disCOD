@@ -1,35 +1,35 @@
 {
-  "name": "discod",
-  "version": "1.0.0",
-  "description": "COD4 Discord Bot",
-  "main": "bot.js",
-  "engines": 
-  {
-    "node": "16.x"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Zoro-6191/disCOD.git"
-  },
-  "author": "Zoro",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/Zoro-6191/disCOD/issues"
-  },
-  "homepage": "https://github.com/Zoro-6191/disCOD#readme",
-  "dependencies": {
-    "@arbytez/cod4-rcon-commands": "^0.1.1",
-    "chokidar": "^3.5.2",
-    "colors": "^1.4.0",
-    "comment-json": "^4.1.1",
-    "discord.js": "^13.1.0",
-    "fs-extra": "^10.0.0",
-    "image-size": "^1.0.0",
-    "node-fetch": "^2.6.4",
-    "promise-mysql": "^5.0.3",
-    "rootpath": "^0.1.2"
-  }
+   "name": "discod",
+   "version": "2.0.0",
+   "description": "COD4 Discord Bot",
+   "main": "build/index.js",
+   "repository": "https://github.com/Zoro-6191/disCOD.git",
+   "author": "Zoro",
+   "license": "MIT",
+   "devDependencies": {
+      "@types/figlet": "^1.5.4",
+      "@types/gradient-string": "^1.1.2",
+      "@types/mysql": "^2.15.21",
+      "@types/node": "^8.0.29",
+      "nodemon": "^2.0.15",
+      "ts-node": "^10.5.0",
+      "typescript": "3.3.3333"
+   },
+   "dependencies": {
+      "chalk": "^4.1.2",
+      "discord.js": "^13.6.0",
+      "figlet": "^1.5.2",
+      "gradient-string": "^2.0.0",
+      "iconv-lite": "^0.6.3",
+      "json5": "^2.2.0",
+      "mysql": "^2.14.1",
+      "reflect-metadata": "^0.1.10",
+      "typeorm": "0.2.41"
+   },
+   "scripts": {
+      "start": "ts-node src/index.ts",
+      "typeorm": "node --require ts-node/register ./node_modules/typeorm/cli.js",
+      "watchts": "tsc -w",
+      "watchjs": "nodemon build/index.js"
+   }
 }

@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/disCOD.code-workspace": true,
+			"**/LICENSE": true,
+			"**/node_modules": true,
+			"**/package-lock.json": true,
+			"**/yarn-error.log": true,
+			"**/yarn.lock": true
+		}
+	}
+}

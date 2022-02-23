@@ -1,0 +1,94 @@
+{
+    // general bot settings
+    discord_token: "",
+
+    // general theme color, used in embeds etc
+    // default: #696969 :)
+    themeColor: "#696969",
+
+    // debug mode: print excessive information to the console.
+    debug: false,
+    
+    // server timezone
+    timezone: "IST",
+
+    chat_prefix: "",
+
+    chat_prefix_pm: "",
+    
+    // cmd settings
+    command: 
+    {
+        // prefix to accept commands
+        // prefix can be multiple characters long and may contain a-z,1-9, all special chars and spaces
+        prefix: "!",
+
+        // these commands will be completely ignored by the bot
+        bypass: [ 
+            "abcd", 
+            "poop" 
+        ],
+        
+        // these commands will be disabled and will be notified so in the chat when used
+        disabled: [ 
+            "ranks", 
+            "potty" 
+        ],
+
+        // enable global command cooldown? true or false
+        enable_global_command_cooldown: true,
+
+        // enable user command cooldown? true or false
+        enable_user_command_cooldown: true,
+        
+        // this is the default cooldown period for each command and each user, more configuration below
+        // example: "69s" or "69m" or "69h"
+        default_user_cooldown: "5s",
+
+        // this is the default global cooldown period for each command, more configuration below
+        // example: "69s" or "69m" or "69h"
+        default_global_cooldown: "1s",
+
+        // least admin level required to bypass user command coolown
+        usercooldown_bypass_level: 60,
+        
+        // least admin level required to bypass global command coolown
+        globalcooldown_bypass_level: 80,
+    },
+
+    // cod4 server info
+    server: 
+    {
+        // if your server is on same pc as this bot, just use "localhost" or "127.0.0.1"
+        rcon_ip: "localhost",
+
+        // default cod4 port: 28960
+        port: 28960,
+
+        // rcon pass must be accurate, case sensitive
+        rcon_password: "rconpass",
+
+        // domain name works too. eg: "143.110.191.162" or "snr.vfesports.in"
+        public_ip: "snr.vfesports.in",
+    },
+
+    // codbot/b3 database
+    mysqldb: 
+    {
+        host: "localhost",
+        port: 3306,   // default: 3306
+        user: "b3", // avoid root whenever possible
+        password: "password",
+        database: "b3",
+    },
+
+    msgs:
+    {
+        rules:
+        {
+            r1: "No Elevators, Punishable by Tempban",
+            r2: "No WH, Aimbot or Triggerbot, Punishable by Permban",
+            r3: "No Misuse of Admin Powers, Punishable by permanent demotion"
+        }
+    }
+}
