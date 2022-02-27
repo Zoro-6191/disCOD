@@ -1,14 +1,18 @@
+import { ColorResolvable } from "discord.js";
+
 // module for typechecking and intellisense for "config.json5"
 interface MainConfig 
 {
     discord_token: string;
-    theme_color: string;
+    themeColor: ColorResolvable;
     debug: boolean;
     timezone: string;
     chat_prefix: string;
     chat_prefix_pm: string;
     readonly command: {
         prefix: string;
+        readonly type: "slash" | "prefix" | "both";
+        readonly visibleToAllByDefault: boolean;
         readonly bypass: string[];
         readonly disabled: string[];
         enable_global_command_cooldown: boolean;
@@ -32,7 +36,9 @@ interface MainConfig
         readonly database: string;
     }
     readonly msgs: {
-        readonly rules: {}
+        readonly rules: {},
+        err_in_cmd: string,
+        insufficient_power: string,
     }
 }
 

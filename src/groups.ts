@@ -10,15 +10,17 @@ declare global
         readonly time_edit: Date | number;
         readonly time_add: Date | number;
     }
+    var GlobalGroups: GlobalGroup[];
 }
-
-declare var GlobalGroups: GlobalGroup[];
 
 export async function initGroups(): Promise<void>
 {
-    return new Promise( async(resolve, reject) => {
-        if( GlobalGroups.length )
+    return new Promise( async(resolve, reject) => 
+    {
+        if( globalThis.GlobalGroups != undefined )
             reject("Group Module has already been initiated");
+
+        globalThis.GlobalGroups = [];
 
         // now we get groups from table and add to "globalGroups"
         const dbsearch = await Groups.find();
@@ -27,7 +29,14 @@ export async function initGroups(): Promise<void>
             reject("Database Table 'groups' was fetched empty");
 
         dbsearch.forEach( group => {
-            GlobalGroups.push({ bits: group.id, ...group })
+            globalThis.GlobalGroups.push({ 
+                bits: group.id, 
+                keyword: group.keyword,
+                level: group.level,
+                name: group.name,
+                time_add: group.timeAdd,
+                time_edit: group.timeEdit 
+            })
         })
 
         // TO-DO: highest and lowest levels

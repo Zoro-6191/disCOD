@@ -1,54 +1,59 @@
-import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 
-
-@Entity()
-export class Aliases extends BaseEntity
+@Index("alias", ["alias", "clientId"], { unique: true })
+@Index("client_id", ["clientId"], {})
+@Entity("aliases")
+export class Aliases 
 {
     // `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    @PrimaryGeneratedColumn({unsigned: true})
-    id!: number;
+    @PrimaryGeneratedColumn({ 
+        type: "int", 
+        name: "id", 
+        unsigned: true
+    })
+    id: number;
 
     // `num_used` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-    @Column({ 
-        type: "int", length: 10,
-        nullable: false, 
+    @Column("int", { 
+        name: "num_used", 
         unsigned: true, 
-        default: 0, 
+        default: () => "'0'" 
     })
-    num_used!: number;
-    
+    numUsed: number;
+
     // `alias` VARCHAR(32) NOT NULL DEFAULT '',
-    @Column({
-        type: "varchar", length: 32, 
-        nullable: false, 
+    @Column("varchar", { 
+        name: "alias", 
+        length: 32,
+        nullable: false,
         default: ""
     })
-    alias!: string;
+    alias: string;
 
-    // `client_id` INT(10) UNSIGNED NOT NULL DEFAULT '0',    
-    @Column({ 
-        type: "int", length: 10,
-        unsigned: true ,
-        nullable: false, 
-        default: 1, 
+    // `client_id` INT(10) UNSIGNED NOT NULL DEFAULT '0',
+    @Column("int", { 
+        name: "client_id", 
+        unsigned: true, 
+        nullable: false,
+        default: () => "'0'" 
     })
-    client_id!: number;
+    clientId: number;
 
     // `time_add` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-    @CreateDateColumn( { 
-        type: "int", length: 10, 
-        unsigned: true,
+    @Column("int", { 
+        name: "time_add", 
+        unsigned: true, 
         nullable: false,
-        default: 0
-    } )
-    time_add!: Date | number;
+        default: () => "'0'" 
+    })
+    timeAdd: number;
 
     // `time_edit` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-    @UpdateDateColumn( { 
-        type: "int", length: 10, 
-        unsigned: true,
+    @Column("int", { 
+        name: "time_edit", 
+        unsigned: true, 
         nullable: false,
-        default: 0
+        default: () => "'0'" 
     })
-    time_edit!: Date | number;
+    timeEdit: number;
 }

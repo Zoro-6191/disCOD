@@ -1,53 +1,24 @@
-import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 
+@Index("ipalias", ["ip", "clientId"], { unique: true })
+@Index("client_id", ["clientId"], {})
+@Entity("ipaliases", { schema: "bonk" })
+export class Ipaliases {
+  @PrimaryGeneratedColumn({ type: "int", name: "id", unsigned: true })
+  id: number;
 
-@Entity()
-export class Ipaliases extends BaseEntity
-{
-    // `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    @PrimaryGeneratedColumn({unsigned: true})
-    id!: number;
+  @Column("int", { name: "num_used", unsigned: true, default: () => "'0'" })
+  numUsed: number;
 
-    // `num_used` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-    @Column({
-        type: "int", length: 10,
-        unsigned: true,
-        nullable: false,
-        default: 0
-    })
-    num_used!: number;
+  @Column("varchar", { name: "ip", length: 16 })
+  ip: string;
 
-    // `ip` VARCHAR(16) NOT NULL,
-    @Column({
-        type: "varchar", length: 16,
-        nullable: false
-    })
-    ip!: string;
+  @Column("int", { name: "client_id", unsigned: true, default: () => "'0'" })
+  clientId: number;
 
-    // `client_id` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-    @Column({
-        type: "int", length: 10,
-        unsigned: true,
-        nullable: false,
-        default: 0
-    })
-    client_id!: number;
+  @Column("int", { name: "time_add", unsigned: true, default: () => "'0'" })
+  timeAdd: number;
 
-    // `time_add` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-    @CreateDateColumn({
-        type: "int", length: 10,
-        unsigned: true,
-        nullable: false,
-        default: 0
-    })
-    time_add!: Date | number;
-
-    // `time_edit` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-    @UpdateDateColumn({
-        type: "int", length: 10,
-        unsigned: true,
-        nullable: false,
-        default: 0
-    })
-    time_edit!: Date | number;
+  @Column("int", { name: "time_edit", unsigned: true, default: () => "'0'" })
+  timeEdit: number;
 }

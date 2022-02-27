@@ -1,58 +1,62 @@
-import { BaseEntity, Column, CreateDateColumn, Entity, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, Entity, Index } from "typeorm";
 
-
-@Entity()
+@Index("keyword", ["keyword"], { unique: true })
+@Index("level", ["level"], {})
+@Entity("groups")
 export class Groups extends BaseEntity
 {
-    // id = bits in b3 for some reason
     // `id` INT(10) UNSIGNED NOT NULL,
-    @Column({
-        type: "int", length: 10,
+    @Column("int", { 
+        primary: true, 
+        name: "id", 
         unsigned: true,
-        nullable: false
+        nullable: false 
     })
-    public id!: number;
+    id: number;
 
     // `name` VARCHAR(32) NOT NULL DEFAULT '',
-    @Column({
-        type: "varchar", length: 32,
-        nullable: false, 
-        default: ""
+    @Column("varchar", { 
+        name: "name", 
+        length: 32,
+        nullable: false,
+        default: () => "",
     })
-    public name!: string;
-    
-    // `keyword` VARCHAR(32) NOT NULL DEFAULT '',
-    @Column({
-        type: "varchar", length: 32,
-        nullable: false, 
-        default: ""
+    name: string;
+
+    // `keyword` VARCHAR(32) UNIQUE NOT NULL DEFAULT '',
+    @Column("varchar", { 
+        name: "keyword", 
+        unique: true, 
+        length: 32,
+        nullable: false,
+        default: () => "",
     })
-    public keyword!: string;
-    
+    keyword: string;
+
     // `level` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-    @Column({
-        type: "int", length: 10,
-        unsigned: true,
-        nullable: false, 
-        default: 0
+    @Column("int", { 
+        name: "level", 
+        unsigned: true, 
+        nullable: false,
+        default: () => "'0'" 
     })
-    public level!: number;
+    level: number;
 
     // `time_edit` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-    @CreateDateColumn({
-        type: "int", length: 10,
-        unsigned: true,
+    @Column("int", { 
+        name: "time_edit", 
+        unsigned: true, 
         nullable: false,
-        default: 0
+        default: () => "'0'" 
     })
-    public time_edit!: Date | number;
+    timeEdit: number;
 
     // `time_add` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-    @UpdateDateColumn({
-        type: "int", length: 10,
-        unsigned: true,
+    @Column("int", { 
+        name: "time_add", 
+        unsigned: true, 
         nullable: false,
-        default: 0
+        default: () => "'0'" 
     })
-    public time_add!: Date | number;
+    timeAdd: number;
 }

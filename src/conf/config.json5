@@ -23,6 +23,13 @@
         // prefix can be multiple characters long and may contain a-z,1-9, all special chars and spaces
         prefix: "!",
 
+        // acceptable command type
+        // Options: "slash" or "prefix" or "both"
+        type: "",
+
+        // Whether slash commands will be visible to everyone by default, unless mentioned otherwise in the command
+        visibleToAllByDefault: true,
+
         // these commands will be completely ignored by the bot
         bypass: [ 
             "abcd", 
@@ -89,6 +96,9 @@
             r1: "No Elevators, Punishable by Tempban",
             r2: "No WH, Aimbot or Triggerbot, Punishable by Permban",
             r3: "No Misuse of Admin Powers, Punishable by permanent demotion"
-        }
+        },
+
+        err_in_cmd: "There was error while processing your command",
+        insufficient_power: "No Permission\nYou need to be atleast %group% [%level%]",
     }
 }

@@ -1,7 +1,6 @@
 import chalk from "chalk";
-import { kill } from "./utilities";
 
-import "json5/lib/register";
+import { kill } from "./utilities";
 import mainconf from "./conf/config.json5";
 
 interface ErHandler 
@@ -22,7 +21,7 @@ export async function initDebugger(): Promise<void>
 
     globalThis.Debug = ( arg: any ) => {
         if( mainconf.debug )
-            console.log(chalk.gray(`Debug: `), arg);    
+            console.log(chalk.cyan(`Debug: `)+`${arg}`);    
     }
 }
 

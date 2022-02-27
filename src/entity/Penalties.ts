@@ -1,112 +1,51 @@
-import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 
-export enum PenaltyType 
-{
-    "Ban",
-    "TempBan",
-    "Kick",
-    "Warning",
-    "Notice"
-}
+@Index("keyword", ["keyword"], {})
+@Index("type", ["type"], {})
+@Index("time_expire", ["timeExpire"], {})
+@Index("time_add", ["timeAdd"], {})
+@Index("admin_id", ["adminId"], {})
+@Index("inactive", ["inactive"], {})
+@Index("client_id", ["clientId"], {})
+@Entity("penalties", { schema: "bonk" })
+export class Penalties {
+  @PrimaryGeneratedColumn({ type: "int", name: "id", unsigned: true })
+  id: number;
 
-@Entity()
-export class Penalties extends BaseEntity
-{
-    // `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    @PrimaryGeneratedColumn({unsigned: true})
-    public id!: number;
+  @Column("enum", {
+    name: "type",
+    enum: ["Ban", "TempBan", "Kick", "Warning", "Notice"],
+    default: () => "'Ban'",
+  })
+  type: "Ban" | "TempBan" | "Kick" | "Warning" | "Notice";
 
-    // `type` ENUM('Ban','TempBan','Kick','Warning','Notice') NOT NULL DEFAULT 'Ban',
-    @Column({
-        type: "enum", enum: PenaltyType,
-        nullable: false,
-        default: "Ban"
-    })
-    public type!: PenaltyType;
+  @Column("int", { name: "client_id", unsigned: true, default: () => "'0'" })
+  clientId: number;
 
-    // `client_id` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-    @Column({
-        type: "int", length: 10,
-        unsigned: true,
-        nullable: false,
-        default: 0
-    })
-    public client_id!: number;
+  @Column("int", { name: "admin_id", unsigned: true, default: () => "'0'" })
+  adminId: number;
 
-    // `admin_id` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-    @Column({
-        type: "int", length: 10,
-        unsigned: true,
-        nullable: false,
-        default: 0
-    })
-    public admin_id!: number;
+  @Column("int", { name: "duration", unsigned: true, default: () => "'0'" })
+  duration: number;
 
-    // `duration` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-    @Column({
-        type: "int", length: 10,
-        unsigned: true,
-        nullable: false,
-        default: 0
-    })
-    public duration: Date | number;
+  @Column("tinyint", { name: "inactive", unsigned: true, default: () => "'0'" })
+  inactive: number;
 
-    // `inactive` TINYINT(1) UNSIGNED NOT NULL DEFAULT '0',
-    @Column({
-        type: "tinyint", length: 1,
-        unsigned: true,
-        nullable: false,
-        default: 0
-    })
-    public inactive!: 1 | 0;
+  @Column("varchar", { name: "keyword", length: 16 })
+  keyword: string;
 
-    // `keyword` VARCHAR(16) NOT NULL DEFAULT '',
-    @Column({
-        type: "varchar", length: 16,
-        nullable: false,
-        default: ""
-    })
-    public keyword!: string;
+  @Column("varchar", { name: "reason", length: 255 })
+  reason: string;
 
-    // `reason` VARCHAR(255) NOT NULL DEFAULT '',
-    @Column({
-        type: "varchar", length: 255,
-        nullable: false,
-        default: ""
-    })
-    public reason!: string
+  @Column("varchar", { name: "data", length: 255 })
+  data: string;
 
-    // `data` VARCHAR(255) NOT NULL DEFAULT '',
-    @Column({
-        type: "varchar", length: 255,
-        nullable: false,
-        default: ""
-    })
-    public data!: string;
+  @Column("int", { name: "time_add", unsigned: true, default: () => "'0'" })
+  timeAdd: number;
 
-    // `time_add` INT(11) UNSIGNED NOT NULL DEFAULT '0',
-    @CreateDateColumn({
-        type: "int", length: 11,
-        unsigned: true,
-        nullable: false,
-        default: 0
-    })
-    public time_add!: Date | number;
+  @Column("int", { name: "time_edit", unsigned: true, default: () => "'0'" })
+  timeEdit: number;
 
-    // `time_edit` INT(11) UNSIGNED NOT NULL DEFAULT '0',
-    @UpdateDateColumn({
-        type: "int", length: 11,
-        unsigned: true,
-        nullable: false,
-        default: 0
-    })
-    public time_edit!: Date | number;
-
-    // `time_expire` INT(11) NOT NULL DEFAULT '0',   
-    @Column({
-        type: "int", length: 11,
-        nullable: false,
-        default: 0
-    })
-    public time_expire!: Date | number;
+  @Column("int", { name: "time_expire", default: () => "'0'" })
+  timeExpire: number;
 }

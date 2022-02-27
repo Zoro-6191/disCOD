@@ -104,7 +104,7 @@ export async function createRconConnection( options: RconConnectionOptions): Pro
 {
     return new Promise( async( resolve, reject  ) => 
     {
-        rcon = new CreateRconConnection( options );
+        globalThis.rcon = new CreateRconConnection( options );
 
         if( !(await rcon.testConnection()) )
             reject();
@@ -381,9 +381,13 @@ class CreateRconConnection implements RconClient
         return toRet;
     }
 
-    public async getOnlinePlayers( options: GetOnlinePlayersArgs ): Promise<RconOnlinePlayer[]> 
+    // TO-DO: sorting
+    public async getOnlinePlayers( options?: GetOnlinePlayersArgs ): Promise<RconOnlinePlayer[]> 
     {
-        if( !options.status )
+        if( options == undefined )
+            options = {};
+
+        if( options.status == undefined )
             var getStatus = await this.sendRconCommand("status");
         else var getStatus = options.status;
 

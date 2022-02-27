@@ -2,7 +2,11 @@ import { Client, Intents } from "discord.js";
 
 declare global 
 {    
-    type DiscordClient = Client;
+    interface DiscordClient extends Client {
+        guildId: string;
+        guildName: string;
+    }
+
     var discordClient: DiscordClient;
 }
 
@@ -16,30 +20,36 @@ export async function initDiscordClient( tok: string ): Promise<DiscordClient>
 
         if( globalThis.discordClient != undefined )
             reject("Discord Client has already been initiated.");
-
-        globalThis.discordClient = new Client({intents: [
-            Intents.FLAGS.DIRECT_MESSAGES,
-            Intents.FLAGS.DIRECT_MESSAGE_REACTIONS,
-            Intents.FLAGS.DIRECT_MESSAGE_TYPING,
-            Intents.FLAGS.GUILDS,
-            Intents.FLAGS.GUILD_BANS,
-            Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS,
-            Intents.FLAGS.GUILD_INTEGRATIONS,
-            Intents.FLAGS.GUILD_INVITES,
-            Intents.FLAGS.GUILD_MEMBERS,
-            Intents.FLAGS.GUILD_MESSAGES,
-            Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-            Intents.FLAGS.GUILD_MESSAGE_TYPING,
-            Intents.FLAGS.GUILD_PRESENCES,
-            Intents.FLAGS.GUILD_SCHEDULED_EVENTS,
-            Intents.FLAGS.GUILD_VOICE_STATES,
-            Intents.FLAGS.GUILD_WEBHOOKS,
-        ]});
-
+        try
+        {    
+            (globalThis.discordClient as any) = new Client({intents: [
+                Intents.FLAGS.DIRECT_MESSAGES,
+                Intents.FLAGS.DIRECT_MESSAGE_REACTIONS,
+                Intents.FLAGS.DIRECT_MESSAGE_TYPING,
+                Intents.FLAGS.GUILDS,
+                Intents.FLAGS.GUILD_BANS,
+                Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS,
+                Intents.FLAGS.GUILD_INTEGRATIONS,
+                Intents.FLAGS.GUILD_INVITES,
+                Intents.FLAGS.GUILD_MEMBERS,
+                Intents.FLAGS.GUILD_MESSAGES,
+                Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+                Intents.FLAGS.GUILD_MESSAGE_TYPING,
+                Intents.FLAGS.GUILD_PRESENCES,
+                Intents.FLAGS.GUILD_SCHEDULED_EVENTS,
+                Intents.FLAGS.GUILD_VOICE_STATES,
+                Intents.FLAGS.GUILD_WEBHOOKS,
+            ]});
+        }
+        catch( e ) { reject(e) }
         discordClient.login( tok );
 
-        discordClient.on( "ready", () => {
-            console.log(`Discord Client: Logged in as ${discordClient.user?.tag}`);            
+        discordClient.on( "ready", () => 
+        {
+            const guildID = discordClient.guilds.cache.map( guild => guild.id);
+            const guildName = discordClient.guilds.cache.map(guid => guid.name);
+            discordClient.guildId = guildID[0];
+            discordClient.guildName = guildName[0];
             resolve(discordClient);
         });
         discordClient.once( "error", err => reject(err) );

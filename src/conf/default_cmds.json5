@@ -1,0 +1,57 @@
+
+// Format:
+// {
+//     name: "Command Name" (string),
+// 
+//     description: "What does the command do?" (string),
+// 
+//     minLevel: "Which level people can use the command?" (integer),
+// 
+//     alias: [ "alias 1", "alias 2" ... no limit ],
+//
+//     acceptSlashArgs: What arguments are acceptable? (array of strings)
+//              [ options: 
+//                         "target" - Mention a person
+//                         "slot" - if the player is currently in server
+//                         "b3id" - !id of player
+//                         "guid" - !xuid of player
+//                         "visible2all" - should it be visible to everyone
+//                         "others" - for other type of commands like !mask and !greeting
+//              ],
+//               Example: acceptSlashArgs: [ "target/b3id/guid", "visible2all" ],
+//               --> will make it so command accepts one of target/b3id/guid and visible2all as arguments                        
+//                        acceptSlashArgs: [], --> accept no arguments for command
+//
+//     // if acceptableArgs includes "others"
+//     // type of this arg also has to be mentioned, options are: "number" | "string" | "array"
+//     otherArgs: { "1st other arg": "type of this arg" }
+//      
+//     
+//     // How should the command be called?
+//     type: "slash" | "prefix" | "both" (string, enter just one of the options)
+//
+// },
+
+{
+    defaultCmds: 
+    [
+        {
+            name: "aliases",
+            description: "See player aliases",
+            minLevel: 20,
+            alias: [ "aa", "a" ],
+            type: "both",
+            acceptSlashArgs: [ "target/slot/guid/b3id", "visible2all" ],
+            visibleToAllByDefault: true,
+        },
+        {
+            name: "ban",
+            description: "Ban a player",
+            minLevel: 60,
+            alias: ["b"],
+            type: "both",
+            acceptSlashArgs: [ "target/guid/b3id", "visible2all" ],
+            visibleToAllByDefault: true,
+        }
+    ]
+}
