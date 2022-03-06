@@ -14,7 +14,7 @@ import { initGroups } from "./groups";
 import { initDiscordClient } from "./discordCon";
 import { EventEmitter } from "events";
 import { initDebugger } from "./errorHandler";
-import { initCommandManager } from "./cmdManager";
+import { initCommandManager } from "./commandHandler";
 
 // TypeORM Entities
 import { Aliases } from "./entity/Aliases";
@@ -76,7 +76,8 @@ async function main()
         username: mainConfig.mysqldb.user,
         password: mainConfig.mysqldb.password,
         database: mainConfig.mysqldb.database,
-        cache: true,
+        // cache: true,
+        // synchronize: true,
 
         // utf8mb4 needed for special char discord names
         charset: "utf8mb4",
@@ -149,18 +150,21 @@ async function main()
     // 7. Display our thing :D
     showDisCOD();
 }
-
+/**
+ * Print Stylish ASCII text in console :)
+ */
 function showDisCOD()
 {
-    if( mainConfig.debug )
+    if( isDebug() )
         return;
-    figlet("disCOD", ( _e, data) => 
+
+    figlet("disCOD", {font: "Slant"}, ( _e, data) => 
     {
-        var gradDef: string[] = ["red", "blue", "cyan", "pink"];
-        console.log(gradient(gradDef)("==============================================================\n"));
+        var gradDef: string[] = ["red", "yellow", "cyan", "pink"];
+        console.log("\n\n");
         const grad = gradient(gradDef)(data);
         console.log(grad);
-        console.log(gradient(gradDef)("==============================================================\n"));
+        console.log("\n\n");
     })
 }
 

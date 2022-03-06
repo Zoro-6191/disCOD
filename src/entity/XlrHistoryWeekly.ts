@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity("xlr_history_weekly", { schema: "bonk" })
+@Entity("xlr_history_weekly")
 export class XlrHistoryWeekly {
   @PrimaryGeneratedColumn({ type: "int", name: "id", unsigned: true })
   id: number;

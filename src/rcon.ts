@@ -1,15 +1,13 @@
 import { createSocket, Socket } from "dgram";
 import { encode } from "iconv-lite";
 
-import { wait } from "./utilities";
-
 declare global 
 {
     var rcon: RconClient;
     
     type RconOnlinePlayer = 
     {
-        readonly guid: string; // guid
+        readonly guid: string;
         readonly slot: number;
         readonly name: string;
         readonly ip: string;
@@ -37,15 +35,56 @@ interface RconClient
     rconpass: string | undefined;
     connected: boolean;
     
+    /**
+     * Similar to GSC
+     * @param  {string} dvar
+     * @returns `Promise< string | number | boolean >`
+     */
     getDvar( dvar: string ): Promise< string | number | boolean >;
+
+    /**
+     * Similar to GSC
+     * @param  {string} dvar
+     * @returns `Promise< boolean >`
+     */
     getDvarBool( dvar: string ): Promise< boolean >;
+    
+    /**
+     * Similar to GSC
+     * @param  {string} dvar
+     * @returns Promise
+     */
     getDvarString( dvar: string ): Promise<string>;
+    
+    /**
+     * Similar to GSC
+     * @param  {string} dvar
+     * @returns Promise< number >
+     */
     getDvarInt( dvar: string ): Promise<number>;
+    
+    /**
+     * Similar to GSC
+     * @param  {string} dvar
+     * @returns Promise< number >
+     */
     getDvarFloat( dvar: string ): Promise<number>;
+    
+    /**
+     * Get current Hostname
+     * @returns Promise< string >
+     */
     getHostname(): Promise<string>;
+    
+    /**
+     * Get server's max possible clients
+     * @returns number
+     */
     getMaxClients(): number;
+    
     getMultipleDvars( ...dvars: string[] ): Promise<object>; 
     getOnlinePlayers( options?: GetOnlinePlayersArgs ): Promise< RconOnlinePlayer[] >;
+    getOnlinePlayerBySlot( slot: number ): Promise< RconOnlinePlayer | undefined>;
     getServerOs(): string | undefined;
     kick( slot: number | string, reason?: string ): Promise<string>;
     quit(): Promise<boolean>;
@@ -267,7 +306,11 @@ class CreateRconConnection implements RconClient
 
         return intt;
     }
-
+    /**
+     * Fetch Dvar in string return format from Rcon
+     * @param  {string} dvar
+     * @returns Promise
+     */
     public async getDvarString(dvar: string): Promise<string> 
     {
         const resp = await this.sendRconCommand(dvar);
@@ -429,6 +472,15 @@ class CreateRconConnection implements RconClient
         players = players.sort((a, b) => (b.score || 0) - (a.score || 0));
         
         return players;
+    }
+
+    public async getOnlinePlayerBySlot( slot: number): Promise<RconOnlinePlayer | undefined>
+    {
+        const players = await this.getOnlinePlayers();
+        for( var i = 0; i < players.length; i++ )
+            if( players[i].slot == slot )
+                return players[i];
+        return undefined;
     }
 
     public getModName(): string

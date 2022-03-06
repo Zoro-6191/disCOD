@@ -2,7 +2,7 @@ import { Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 
 @Index("target_id", ["targetId"], {})
 @Index("killer_id", ["killerId"], {})
-@Entity("xlr_opponents", { schema: "bonk" })
+@Entity("xlr_opponents")
 export class XlrOpponents {
   @PrimaryGeneratedColumn({ type: "mediumint", name: "id", unsigned: true })
   id: number;

@@ -2,7 +2,7 @@ import { Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 
 @Index("id", ["id"], { unique: true })
 @Index("client_id", ["clientId"], { unique: true })
-@Entity("discod_reso", { schema: "bonk" })
+@Entity("discod_reso")
 export class DiscodReso {
   @PrimaryGeneratedColumn({ type: "int", name: "id" })
   id: number;

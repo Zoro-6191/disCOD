@@ -1,7 +1,7 @@
 import { Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 
 @Index("client_id", ["clientId"], { unique: true })
-@Entity("xlr_playerstats", { schema: "bonk" })
+@Entity("xlr_playerstats")
 export class XlrPlayerstats {
   @PrimaryGeneratedColumn({ type: "int", name: "id", unsigned: true })
   id: number;

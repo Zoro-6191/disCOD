@@ -1,9 +1,9 @@
-import { Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Index("alias", ["alias", "clientId"], { unique: true })
 @Index("client_id", ["clientId"], {})
 @Entity("aliases")
-export class Aliases 
+export class Aliases
 {
     // `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
     @PrimaryGeneratedColumn({ 
@@ -40,7 +40,8 @@ export class Aliases
     clientId: number;
 
     // `time_add` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-    @Column("int", { 
+    @CreateDateColumn({ 
+        type: "timestamp",
         name: "time_add", 
         unsigned: true, 
         nullable: false,
@@ -49,9 +50,10 @@ export class Aliases
     timeAdd: number;
 
     // `time_edit` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-    @Column("int", { 
+    @UpdateDateColumn({ 
+        type: "timestamp",
         name: "time_edit", 
-        unsigned: true, 
+        unsigned: true,
         nullable: false,
         default: () => "'0'" 
     })

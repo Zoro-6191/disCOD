@@ -1,31 +1,62 @@
-import { Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 
-@Index("id", ["id"], { unique: true })
+// @Index("id", ["id"], { unique: true })
 @Index("b3_id", ["b3Id"], { unique: true })
 @Index("dc_id", ["dcId"], { unique: true })
+@Index("dc_tag", ["dc_tag"], {})
+// @Index("time_add", ["time_add"], {})
 @Entity("discod")
 export class Discod {
-  @PrimaryGeneratedColumn({ type: "int", name: "id" })
-  id: number;
 
-  @Column("int", { name: "b3_id", unique: true })
-  b3Id: number;
+    @PrimaryGeneratedColumn({ 
+        type: "int", 
+        name: "id" 
+    })
+    id: number;
 
-  @Column("varchar", { name: "dc_id", unique: true, length: 32 })
-  dcId: string;
+    @Column("int", { 
+        name: "b3_id", 
+        nullable: false,
+        unique: true 
+    })
+    b3Id: number;
 
-  @Column("varchar", { name: "dc_tag", length: 32 })
-  dcTag: string;
+    @Column("varchar", { 
+        name: "dc_id", 
+        unique: true, 
+        length: 32 
+    })
+    dcId: string;
 
-  @Column("varchar", { name: "pass", length: 12 })
-  pass: string;
+    @Column("varchar", { 
+        name: "dc_tag", 
+        length: 32 
+    })
+    dc_tag: string;
 
-  @Column("tinyint", { name: "linked", default: () => "'0'" })
-  linked: number;
+    @Column("varchar", { 
+        name: "pass", 
+        length: 12 
+    })
+    pass: string;
 
-  @Column("int", { name: "linktime", default: () => "'0'" })
-  linktime: number;
+    @Column("tinyint", { 
+        name: "linked", 
+        default: () => "'0'" 
+    })
+    linked: number;
 
-  @Column("int", { name: "time_add", default: () => "'0'" })
-  timeAdd: number;
+    @Column({ 
+        type: "timestamp",
+        name: "linktime", 
+        default: () => "'0'" 
+    })
+    linktime: number;
+
+    @CreateDateColumn({ 
+        type: "timestamp",
+        name: "time_add", 
+        unsigned: true,
+    })
+    time_add: number;
 }

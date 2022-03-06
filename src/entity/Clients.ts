@@ -8,6 +8,13 @@ import { BaseEntity, Column, Entity, Index, PrimaryGeneratedColumn, Unique } fro
 export class Clients extends BaseEntity
 {
     // `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+    /**
+     * Primary Column
+     * @param  {"int"} {type
+     * @param  {"id"} name
+     * @param  {true}} unsigned
+     * @returns number
+     */
     @PrimaryGeneratedColumn({ 
         type: "int", 
         name: "id", 
