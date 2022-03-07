@@ -1,9 +1,9 @@
-import { CommandInteraction, Message, MessageEmbed, User } from "discord.js";
+import { Message, MessageEmbed, User } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders"
 const { Routes } = require('discord-api-types/v9');
 import { getRepository } from "typeorm";
 
-import { SlashCommandArgObject } from "./helper";
+import { CommandArgument } from "./helper";
 import { Clients } from "../entity/Clients";
 import { Discod } from "../entity/Discod";
 import { rest } from ".";
@@ -20,7 +20,7 @@ linkCmds[0] = {
     minLevel: 0,
     visibleToAllByDefault: true,
     type: "both",
-    acceptSlashArgs: ["b3id"],
+    acceptArgs: { b3id: true },
     callback: cmd_link as any,
 }
 
@@ -31,7 +31,11 @@ linkCmds[1]= {
     minLevel: 0,
     type: "both",
     visibleToAllByDefault: true,
-    acceptSlashArgs: ["other"],
+    acceptArgs: {
+        other: {
+            confirm: true,
+        }
+    },
     callback: cmd_unlink as any,
 }
 
@@ -43,7 +47,10 @@ linkCmds[2] = {
     minLevel: 100,
     type: "both",
     visibleToAllByDefault: true,
-    acceptSlashArgs: ["target","b3id"],
+    acceptArgs: {
+        target: true,
+        b3id: true
+    },
     callback: cmd_forcelink as any,
 }
 
@@ -55,7 +62,10 @@ linkCmds[3] = {
     minLevel: 100,
     type: "both",
     visibleToAllByDefault: true,
-    acceptSlashArgs: ["target/b3id"],
+    acceptArgs: {
+        target: false,
+        b3id: false
+    },
     callback: cmd_forceunlink as any,
 }
 
@@ -130,13 +140,7 @@ export async function registerLinkCommands()
 
 
 export async function cmd_link( 
-    arg: { 
-        ctx: Message | CommandInteraction,
-        commander?: Clients, 
-        cmd: Command,
-        link?: Discod,
-        b3id: number 
-    }
+    arg: CommandArgument
  )
 {  
     const embed = new MessageEmbed().setColor(themeColor);
@@ -284,13 +288,7 @@ export async function cmd_forcelink( arg: {
                         .setThumbnail(tickImageURL);
 }
 
-export async function cmd_forceunlink( arg: { 
-    commander?: Clients, 
-    cmd: Command,
-    link?: Discod,
-    target?: User,
-    b3id?: number
-} ): Promise<MessageEmbed>
+export async function cmd_forceunlink( arg: CommandArgument ): Promise<MessageEmbed>
 {
     const embed = new MessageEmbed().setColor(themeColor);
 

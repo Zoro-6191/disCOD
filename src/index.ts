@@ -41,9 +41,13 @@ import { XlrPlayerstats } from "./entity/XlrPlayerstats";
 import { XlrWeaponstats } from "./entity/XlrWeaponstats";
 import { XlrWeaponusage } from "./entity/XlrWeaponusage";
 import { areConfigsOkay } from "./configs";
+import { Timer } from "./utilities";
+
+const launchTime = new Timer();
 
 async function main()
 {
+    const stepTimer = new Timer();
     initDebugger();
     Debug("Debugger Enabled");
     globalThis.events = new EventEmitter();
@@ -55,12 +59,12 @@ async function main()
             confCheckSpinner.fail(chalk.red(`Follow the json/json5 format man`));
             ErrorHandler.fatal(er);
         })
-        .then( () => confCheckSpinner.succeed( `All configs are okay` ) )
+        .then( () => confCheckSpinner.succeed( `Checked all configs` + chalk.yellow(` - ${stepTimer.getTime()}ms`) ) )
 
     // 1: discord connection
     const discordSpinner = ora(chalk.yellow(`Attempting to connect to Discord Api`)).start();
     await initDiscordClient(mainConfig.discord_token)
-        .then( () => { discordSpinner.succeed( `Connected to ` +chalk.blue.bold(discordClient.guildName)+ ` as ` + chalk.green.bold.underline(discordClient.user?.username) ) } )
+        .then( () => { discordSpinner.succeed( `Connected to ` +chalk.blue.bold(discordClient.guildName)+ ` as ` + chalk.green.bold.underline(discordClient.user?.username) + chalk.yellow(` - ${stepTimer.getTime()}ms`)) } )
         .catch( err => {
             discordSpinner.fail(chalk.red(`Failed to connect to Discord`))
             ErrorHandler.fatal(err);
@@ -116,21 +120,21 @@ async function main()
             Demotions,
         ],
     })
-    .then( () => { dbSpinner.succeed(`MySQL Connection Successful`) })
+    .then( () => { dbSpinner.succeed(`MySQL Connection Successful` + chalk.yellow(` - ${stepTimer.getTime()}ms`)) })
     .catch( err => {
         dbSpinner.fail(chalk.red(`Failed to connect to MySQL Server`))
         ErrorHandler.fatal(err);
     }  );
 
     // 3: rcon connection
-    // TO-DO: make it reconnectable for when server crashing
+    // TO-DO: make it reconnectable for when server crashing?
     const rconSpinner = ora(chalk.yellow(`Attempting to establish RCON Connection`)).start();
     await createRconConnection({
         ip: mainConfig.server.rcon_ip,
         port: mainConfig.server.port,
         rconpass: mainConfig.server.rcon_password
     })
-    .then( () => rconSpinner.succeed(`Connected Rcon to `+chalk.magentaBright(rcon.ip)+":"+chalk.blueBright(rcon.port)) )
+    .then( () => rconSpinner.succeed(`Connected Rcon to `+chalk.magentaBright(rcon.ip)+":"+chalk.blueBright(rcon.port) + chalk.yellow(` - ${stepTimer.getTime()}ms`) ) )
     .catch( err => {
         rconSpinner.fail(`Failed to establish RCON Connection`);
         ErrorHandler.fatal(err);
@@ -142,14 +146,20 @@ async function main()
         .then( () => Debug("Initialized User and Admin Groups") );
 
     // 5. init and start receiving commands
-    await initCommandManager();
+    const cmdSpinr = ora(chalk.yellow(`Registering Default Commands`)).start();
+    await initCommandManager()
+        .catch( ErrorHandler.fatal )
+        .then( () => { cmdSpinr.succeed(`Registered default commands (${GlobalCommands.length})` + chalk.yellow(` - ${stepTimer.getTime()}ms`)) });
 
     // 6. Plugins
     
 
     // 7. Display our thing :D
     showDisCOD();
+    
+    Debug("Total Launchtime: "+chalk.red(launchTime.getTime()+"ms"));
 }
+
 /**
  * Print Stylish ASCII text in console :)
  */

@@ -4,16 +4,20 @@ import { getRepository } from "typeorm";
 import { Discod } from "../entity/Discod";
 import { Clients } from "../entity/Clients";
 
-export type SlashCommandArgObject = {
-    commander: Clients | undefined;
-    cmd: Command;
-    target?: User;
-    b3id?: number;
-    guid?: string;
-    slot?: number;
+export type CommandArgument = { 
+    ctx: Message | CommandInteraction,
+    commander?: Clients, 
+    cmd: Command, 
+    link?: Discod,
+    target?: User,
+    b3id?: number,
+    slot?: number,
+    guid?: string,
     visible2all?: boolean,
-    other?: any,
+    other: any
 }
+
+export type CommandResponse = MessageEmbed | string | undefined | MessageEmbed[] | [MessageEmbed];
 
 type ReplyTo = {
     BAD_B3ID?: boolean;
@@ -22,9 +26,8 @@ type ReplyTo = {
     SLOT_EMPTY?: false;
 }
 
-export async function getClientFromSlashCommandArgObject( 
-        ctx: Message | CommandInteraction, 
-        arg: SlashCommandArgObject, 
+export async function getClientFromCommandArg(
+        arg: CommandArgument, 
         replyTo?: ReplyTo
     ): Promise< Clients | undefined >
 {
@@ -39,7 +42,7 @@ export async function getClientFromSlashCommandArgObject(
             if( cl == undefined || arg.b3id < 2 )
             {
                 if( replyTo == undefined || ( replyTo != undefined && replyTo.BAD_B3ID != undefined && replyTo.BAD_B3ID ) )
-                    ctx.reply({
+                    arg.ctx.reply({
                         embeds: [embed.setDescription(`❌ Invalid B3 ID **@${arg.b3id}**`)],
                         ephemeral: true,
                     });
@@ -54,7 +57,7 @@ export async function getClientFromSlashCommandArgObject(
             if( cl == undefined)
             {
                 if( replyTo == undefined || ( replyTo != undefined && replyTo.BAD_GUID != undefined && replyTo.BAD_GUID ) )
-                    ctx.reply({
+                    arg.ctx.reply({
                         embeds: [embed.setDescription(`❌ Invalid GUID **@${arg.guid}**`)],
                         ephemeral: true,
                     })
@@ -69,7 +72,7 @@ export async function getClientFromSlashCommandArgObject(
             if( q[0] == undefined)
             {
                 if( replyTo == undefined || ( replyTo != undefined && replyTo.NO_LINK != undefined && replyTo.NO_LINK ) )
-                    ctx.reply({
+                    arg.ctx.reply({
                         embeds: [embed.setDescription(`❌ <@${arg.target.id}> hasn't linked :(`)],
                         ephemeral: true,
                     })
@@ -83,7 +86,7 @@ export async function getClientFromSlashCommandArgObject(
             if( onlinePlayer == undefined )
             {
                 if( replyTo == undefined || ( replyTo != undefined && replyTo.SLOT_EMPTY != undefined && replyTo.SLOT_EMPTY ) )
-                    ctx.reply({
+                    arg.ctx.reply({
                         embeds: [embed.setDescription(`❌ Slot [${arg.slot}] is unoccupied`)],
                         ephemeral: true,
                     });

@@ -1,4 +1,4 @@
-import { MessageEmbed, ColorResolvable, Message, CommandInteraction, Interaction } from "discord.js";
+import { MessageEmbed, ColorResolvable, Message, CommandInteraction } from "discord.js";
 import { getRepository } from "typeorm";
 import mainConfig from "./conf/config.json5";
 import { Aliases } from "./entity/Aliases";
@@ -190,3 +190,30 @@ export function kill()
     return process.exit(1);
 }
 
+export class Timer
+{
+    private start: number;
+
+    constructor()
+    {
+        this.updateTimer()
+        return this;
+    }
+
+    public getTime(): number
+    {
+        const start = this.start;
+        this.updateTimer();
+        return this.getEpoch() - start;
+    }
+
+    private updateTimer(): void
+    {
+        this.start = this.getEpoch();
+    }
+
+    private getEpoch(): number
+    {
+        return new Date() as any;
+    }
+}

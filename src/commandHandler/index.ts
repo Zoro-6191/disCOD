@@ -13,6 +13,7 @@ import defaultCmdsConfig from "../conf/default_cmds.json5";
 import { Clients } from "../entity/Clients";
 import { registerLinkCommands } from "./linkCommands";
 import { Discod } from "../entity/Discod";
+import { CommandResponse } from "./helper";
 
 declare global 
 {
@@ -21,9 +22,16 @@ declare global
         description: string,
         type: "slash" | "prefix" | "both",
         visibleToAllByDefault: boolean,
-        acceptSlashArgs: string[],
+        acceptArgs: { 
+            target?: User, 
+            b3id?: number,
+            slot?: number,
+            guid?: string,
+            visible2all?: string,
+            other?: any
+        } & any,
         minLevel: number,
-        callback: ( args: {} | string[], ctx: Message | Interaction ) => Promise<string | MessageEmbed[]>,
+        callback: ( args: CommandArgument ) => Promise<CommandResponse>,
         // helpMsg: string,
         alias: string[],
     }
@@ -37,7 +45,7 @@ declare global
 var CommandManager: ComMan = {
     registerCommand,
     removeCommand,
-    doesCommandExist: getCommandIfExists,
+    getCommand,
     addCommandAlias,
     getCommandAlias,
     getCommandFromAlias,
@@ -61,7 +69,6 @@ export async function initCommandManager()
 
     globalThis.GlobalCommands = [];
     globalThis.themeColor = mainconfig.themeColor;
-    Debug(`Theme Color set to: ${themeColor}`);
 
     // rawQuery method
     globalThis.rawQuery = (q: string) => getConnection().manager.query(q);
@@ -69,7 +76,6 @@ export async function initCommandManager()
     const mainconfOps = mainconfig.command;
 
     globalThis.cmdPrefix = mainconfOps.prefix;
-    Debug(`Prefix set to "${cmdPrefix}"`);
 
     // init slash commands
     var slashCmds: SlashCommandBuilder[] = [];
@@ -82,7 +88,7 @@ export async function initCommandManager()
     {
         var cmd = defaultCmdsConfig.defaultCmds[i];
 
-        const defaultCallback: Function = (await import("./defaultCommands") as any)["cmd_"+cmd.name];
+        cmd.callback = (await import("./defaultCommands") as any)["cmd_"+cmd.name];
 
         if( cmd.type != "prefix" )
         {
@@ -90,63 +96,48 @@ export async function initCommandManager()
                 .setName(cmd.name)
                 .setDescription(cmd.description)
 
-            // process acceptable command arguments
-            const accInput: string[] = cmd.acceptSlashArgs;
+            const currentSlashCommand = slashCmds[slashCmds.length-1];
 
-            for( var i = 0; i < accInput.length; i++ )
-            {
-                if( accInput[i].includes("target"))
-                    slashCmds[slashCmds.length-1]
-                        .addMentionableOption( opt => 
-                        opt.setName("target")
-                            .setDescription("Mention a User")
-                            .setRequired(false)
-                        )
-                if( accInput[i].includes("b3id") )
-                    slashCmds[slashCmds.length-1]
-                        .addIntegerOption( opt => 
-                        opt.setName("b3id")
-                            .setDescription("B3 ID of player")
-                            .setRequired(false)
-                            .setMinValue(2)
-                            .setMaxValue(999999)
-                        )
-                if( accInput[i].includes("guid") )
-                    slashCmds[slashCmds.length-1]
-                        .addStringOption( opt => 
-                        opt.setName("guid")
-                            .setDescription("GUID of player")
-                            .setRequired(false)
-                        )
-                if( accInput[i].includes("slot") )
-                    slashCmds[slashCmds.length-1]
-                        .addIntegerOption( opt => 
-                        opt.setName("slot")
-                            .setDescription("Slot of player if he's currently in-game")
-                            .setRequired(false)
-                        )
-                if( accInput[i].includes("visible2all") )
-                    slashCmds[slashCmds.length-1]
-                        .addBooleanOption( opt =>
-                        opt.setName("visible2all")
-                            .setDescription("If false, only you will be able to see response.")
-                            .setRequired(false)
-                        )
-            }
+            // process acceptable command arguments
+            const accInput: any = cmd.acceptArgs;
+
+            if( accInput.target != undefined )
+                currentSlashCommand.addMentionableOption( opt => 
+                            opt.setName("target")
+                                .setDescription("Mention a User")
+                                .setRequired(accInput.target)
+                            );
+            if( accInput.b3id != undefined )
+                currentSlashCommand.addIntegerOption( opt => 
+                            opt.setName("b3id")
+                                .setDescription("B3 ID of player")
+                                .setMinValue(2)
+                                .setMaxValue(999999)
+                                .setRequired(accInput.b3id)
+                            );
+            if( accInput.guid != undefined )
+                currentSlashCommand.addStringOption( opt => 
+                            opt.setName("guid")
+                                .setDescription("GUID of player")
+                                .setRequired(accInput.guid)
+                            );
+            if( accInput.slot != undefined )
+                currentSlashCommand.addIntegerOption( opt => 
+                            opt.setName("slot")
+                                .setDescription("Slot of player if he's currently in-game")
+                                .setRequired(accInput.slot)
+                            );
+            if( accInput.visible2all != undefined )
+                currentSlashCommand.addBooleanOption( opt =>
+                            opt.setName("visible2all")
+                                .setDescription("If false, only you will be able to see response.")
+                                .setRequired(accInput.visible2all)
+                            );
         }
         
-        var createCmd: Command = {
-            name: cmd.name,
-            alias: cmd.alias,
-            type: cmd.type,
-            minLevel: cmd.minLevel,
-            description: cmd.description,
-            callback: defaultCallback as any,
-            visibleToAllByDefault: cmd.visibleToAllByDefault == undefined? mainconfig.command.visibleToAllByDefault: cmd.visibleToAllByDefault,
-            acceptSlashArgs: cmd.acceptSlashArgs
-        }
+        var createCmd: Command = { ...cmd }
         globalThis.GlobalCommands.push(createCmd);
-    }
+    }  
 
     await rest.put(
         Routes.applicationGuildCommands(discordClient.user?.id, discordClient.guildId ),
@@ -178,14 +169,12 @@ type CommandArgument = {
 async function processIncomingCommand( ctx: Message | CommandInteraction )
 {
     Debug(`Command Interaction`);
-    // console.log(ctx);
     
     const isInteraction = ctx instanceof CommandInteraction || ctx instanceof Interaction;
 
     if( isInteraction )
     {
         // Slash Command
-
         if( !ctx.isApplicationCommand() )
             return;
 
@@ -194,7 +183,6 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
     else if( ctx instanceof Message )
     {
         // Prefix Command
-
         var content: string = ctx.content.trim();
 
         // check if we really wanna processs it
@@ -221,9 +209,9 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
     }
 
     // get our command from globalcommands
-    const cmd = getCommandIfExists( { name: commandName, alias: commandName } );
+    const cmd = getCommand( { name: commandName, alias: commandName } );
     
-    if( typeof cmd == "boolean" )
+    if( cmd == undefined )
     {
         if( isInteraction )
         {
@@ -247,14 +235,14 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
     if( !linkCheck && cmd.minLevel > 0 )
         return;
 
-    var client: Clients | undefined;
+    var commander: Clients | undefined;
 
     if( !linkCheck || discodQ == undefined )
-        client = undefined;
-    else client = await getRepository(Clients).findOne(discodQ.b3Id);
+        commander = undefined;
+    else commander = await getRepository(Clients).findOne(discodQ.b3Id);
     
     // do i have access?
-    const powerCheck = await checkPower( ctx, cmd, client );
+    const powerCheck = await checkPower( ctx, cmd, commander );
     if( !powerCheck )
         return;
 
@@ -263,7 +251,7 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
     {
         var argObject: CommandArgument = { 
             ctx,
-            commander: client, 
+            commander, 
             cmd, 
             link: discodQ,
             other: {}
@@ -300,10 +288,10 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
     }
 
     // call our command
-    var response: string | MessageEmbed | MessageEmbed[];
+    var response: CommandResponse;
     try
     {
-        response = await cmd.callback(argObject,ctx);
+        response = await cmd.callback(argObject);
     }
     catch(e)
     {
@@ -311,7 +299,7 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
         return await SendEmbed({ ctx,desc: mainconfig.msgs.err_in_cmd });
     }
 
-    if( response != "" )
+    if( response != undefined && response != "" )
     {
         if( isInteraction )
         {
@@ -354,7 +342,7 @@ interface ComMan
 {
     registerCommand( options: Command ): boolean;
     removeCommand( name: string ): void;
-    doesCommandExist( options: { name?: string, alias?: string } ): Command | boolean;
+    getCommand( options: { name?: string, alias?: string } ): Command | undefined;
     addCommandAlias( name: string, alias: string[] ): void;
     getCommandAlias( name: string ): string[] | undefined;
     getCommandFromAlias( alias: string ): Command | undefined;
@@ -431,9 +419,9 @@ function registerCommand( options: Command ): boolean
         options.alias[i] = options.alias[i].toLocaleLowerCase();
     
     // can't have dups
-    const exists = getCommandIfExists( { name: options.name } );
+    const exists = getCommand( { name: options.name } );
 
-    if( typeof exists == "boolean" )
+    if( exists == undefined )
         GlobalCommands.push(options);
     else 
     {
@@ -456,10 +444,10 @@ function removeCommand( name: string ): void
     }
 }
 
-function getCommandIfExists( options: { name?: string, alias?: string } ): Command | boolean
+function getCommand( options: { name?: string, alias?: string } ): Command | undefined
 {
     if( options === {} )
-        return false;
+        return;
 
     for( var i = 0; i < GlobalCommands.length; i++ )
     {
@@ -472,7 +460,7 @@ function getCommandIfExists( options: { name?: string, alias?: string } ): Comma
             if( cmd.alias.includes(options.alias) )
                 return cmd;
     }
-    return false;
+    return;
 }
 
 function getCommandAlias( name: string ): string[] | undefined
