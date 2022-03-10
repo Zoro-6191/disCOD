@@ -1,12 +1,13 @@
 import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 
 // @Index("id", ["id"], { unique: true })
-@Index("b3_id", ["b3Id"], { unique: true })
-@Index("dc_id", ["dcId"], { unique: true })
+@Index("b3_id", ["b3_id"], { unique: true })
+@Index("dc_id", ["dc_id"], { unique: true })
 @Index("dc_tag", ["dc_tag"], {})
 // @Index("time_add", ["time_add"], {})
 @Entity("discod")
-export class Discod {
+export class Discod
+ {
 
     @PrimaryGeneratedColumn({ 
         type: "int", 
@@ -19,14 +20,14 @@ export class Discod {
         nullable: false,
         unique: true 
     })
-    b3Id: number;
+    b3_id: number;
 
     @Column("varchar", { 
         name: "dc_id", 
         unique: true, 
         length: 32 
     })
-    dcId: string;
+    dc_id: string;
 
     @Column("varchar", { 
         name: "dc_tag", 

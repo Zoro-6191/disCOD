@@ -9,7 +9,7 @@
 // 
 //     alias: [ "alias 1", "alias 2" ... no limit ],
 //
-//     acceptSlashArgs: What arguments are acceptable? (array of strings)
+//     acceptArgs: What arguments are acceptable? (array of strings)
 //              [ options: 
 //                         "target" - Mention a person
 //                         "slot" - if the player is currently in server
@@ -18,13 +18,13 @@
 //                         "visible2all" - should it be visible to everyone
 //                         "others" - for other type of commands like !mask and !greeting
 //              ],
-//               Example: acceptSlashArgs: [ "target/b3id/guid", "visible2all" ],
+//               Example: acceptArgs: [ "target/b3id/guid", "visible2all" ],
 //               --> will make it so command accepts one of target/b3id/guid and visible2all as arguments                        
-//                        acceptSlashArgs: [], --> accept no arguments for command
+//                        acceptArgs: [], --> accept no arguments for command
 //
 //     // if acceptableArgs includes "others"
 //     // type of this arg also has to be mentioned, options are: "number" | "string" | "array"
-//     otherArgs: { "1st other arg": "type of this arg" }
+//     otherArgs: { "1st other arg": true/false (required or optional) }
 //      
 //     
 //     // How should the command be called?
@@ -41,16 +41,131 @@
             minLevel: 20,
             alias: [ "aa" ],
             type: "slash",
-            acceptSlashArgs: [ "target/slot/guid/b3id", "visible2all" ],
-            visibleToAllByDefault: false,
+            acceptArgs: {
+                target: false,
+                b3id: false,
+                slot: false,
+                guid: false,
+                visible2all: false
+            },
+            visibleToAllByDefault: true,
         },
         {
-            name: "ban",
-            description: "Ban a player",
+            name: "baninfo",
+            description: "Check Ban status of a player",
+            minLevel: 40,
+            alias: [],
+            type: "slash",
+            acceptArgs: {
+                target: false,
+                b3id: false,
+                guid: false,
+                visible2all: false
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: "fast_restart",
+            description: "Fast Restart map",
+            minLevel: 80,
+            alias: ["fr"],
+            type: "slash",
+            acceptArgs: {
+                visible2all: false
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: "guid",
+            description: "Fetch GUID",
             minLevel: 60,
             alias: [],
-            type: "both",
-            acceptSlashArgs: [ "target/guid/b3id", "visible2all" ],
+            type: "slash",
+            acceptArgs: {
+                target: false,
+                b3id: false,
+                slot: false,
+                visible2all: false
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: "id",
+            description: "Fetch ID",
+            minLevel: 1,
+            alias: ["b3id"],
+            type: "slash",
+            acceptArgs: {
+                target: false,
+                slot: false,
+                guid: false,
+                visible2all: false
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: "lbans",
+            description: "Fetch latest active bans",
+            minLevel: 40,
+            alias: ["lastbans"],
+            type: "slash",
+            acceptArgs: {
+                visible2all: false
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: "leveltest",
+            description: "Fetch latest active bans",
+            minLevel: 40,
+            alias: ["lt"],
+            type: "slash",
+            acceptArgs: {
+                target: false,
+                b3id: false,
+                visible2all: false
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: "mask",
+            description: "Mask a player",
+            minLevel: 80,
+            alias: [],
+            type: "slash",
+            acceptArgs: {
+                target: false,
+                b3id: false,
+                visible2all: false,
+                group: true,
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: "putgroup",
+            description: "Change player's user group",
+            minLevel: 100,
+            alias: ["pg"],
+            type: "slash",
+            acceptArgs: {
+                target: false,
+                b3id: false,
+                visible2all: false,
+                group: true,
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: "unmask",
+            description: "Unmask a player",
+            minLevel: 80,
+            alias: [],
+            type: "slash",
+            acceptArgs: {
+                target: false,
+                b3id: false,
+                visible2all: false,
+            },
             visibleToAllByDefault: true,
         }
     ]

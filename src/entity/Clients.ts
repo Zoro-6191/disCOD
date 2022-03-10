@@ -1,7 +1,7 @@
 import { BaseEntity, Column, Entity, Index, PrimaryGeneratedColumn, Unique } from "typeorm";
 
 @Index("guid", ["guid"], { unique: true })
-@Index("group_bits", ["groupBits"], {})
+@Index("group_bits", ["group_bits"], {})
 @Index("name", ["name"], {})
 @Unique(["guid"])
 @Entity("clients")
@@ -74,7 +74,7 @@ export class Clients extends BaseEntity
         nullable: false,
         default: () => "'0'",
     })
-    autoLogin: number;
+    auto_login: number;
 
     // `mask_level` TINYINT(1) UNSIGNED NOT NULL DEFAULT '0',
     @Column("tinyint", {
@@ -82,7 +82,7 @@ export class Clients extends BaseEntity
         unsigned: true,
         default: () => "'0'",
     })
-    maskLevel: number;
+    mask_level: number;
 
     // `group_bits` MEDIUMINT(8) UNSIGNED NOT NULL DEFAULT '0',
     @Column("mediumint", {
@@ -91,7 +91,7 @@ export class Clients extends BaseEntity
         nullable: false,
         default: () => "'0'",
     })
-    groupBits: number;
+    group_bits: number;
 
     // `greeting` VARCHAR(128) NOT NULL DEFAULT '',
     @Column("varchar", { 
@@ -109,7 +109,7 @@ export class Clients extends BaseEntity
         nullable: false,
         default: () => "'0'" 
     })
-    timeAdd: number;
+    time_add: number;
 
     // `time_edit` INT(11) UNSIGNED NOT NULL DEFAULT '0',
     @Column("int", { 
@@ -117,7 +117,7 @@ export class Clients extends BaseEntity
         unsigned: true, 
         default: () => "'0'" 
     })
-    timeEdit: number;
+    time_edit: number;
 
     // `password` VARCHAR(32) DEFAULT NULL
     @Column("varchar", { 

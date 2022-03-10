@@ -11,6 +11,7 @@
       "@types/gradient-string": "^1.1.2",
       "@types/mysql": "^2.15.21",
       "@types/node": "^8.0.29",
+      "@types/node-fetch": "^2.6.1",
       "nodemon": "^2.0.15",
       "typescript": "3.3.3333"
    },
@@ -24,9 +25,10 @@
       "iconv-lite": "^0.6.3",
       "json5": "^2.2.0",
       "mysql": "^2.14.1",
+      "node-fetch": "^2.6.7",
       "ora": "5.4.1",
       "reflect-metadata": "^0.1.10",
-      "typeorm": "0.2.41"
+      "typeorm": "^0.3.0-rc.36"
    },
    "scripts": {
       "prebuild": "npm i -g typescript typeorm-model-generator nodemon ts-node",

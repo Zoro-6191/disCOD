@@ -1,18 +1,18 @@
 {
     // general bot settings
-    discord_token: "",
+    discord_token: "OTQ2MDYxMDEyNTMxMDI4MDc5.YhZN-g.REFfpEQy09QDz54GTcoQ8aW1oy8",
 
     // general theme color, used in embeds etc
     // default: #696969 :)
     themeColor: "#696969",
 
     // debug mode: print excessive information to the console.
-    debug: false,
+    debug: true,
     
     // server timezone
     timezone: "IST",
 
-    chat_prefix: "",
+    chat_prefix: "^0[^6disCOD^0]^7: ",
 
     chat_prefix_pm: "",
     
@@ -38,7 +38,7 @@
         
         // these commands will be disabled and will be notified so in the chat when used
         disabled: [ 
-            "ranks", 
+            "ranks",
             "potty" 
         ],
 
@@ -84,9 +84,9 @@
     {
         host: "localhost",
         port: 3306,   // default: 3306
-        user: "b3", // avoid root whenever possible
+        user: "user", // avoid root whenever possible
         password: "password",
-        database: "b3",
+        database: "database",
     },
 
     msgs:
@@ -98,7 +98,7 @@
             r3: "No Misuse of Admin Powers, Punishable by permanent demotion"
         },
 
-        err_in_cmd: "There was error while processing your command",
-        insufficient_power: "No Permission\nYou need to be atleast %group% [%level%]",
+        err_in_cmd: "❌ Error while processing your command",
+        insufficient_power: "❌ No Permission\nYou need to be atleast %group% [%level%]",
     }
 }

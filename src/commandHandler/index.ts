@@ -1,5 +1,5 @@
 // import "json5/lib/register";
-import { ColorResolvable, CommandInteraction, Interaction, Message, MessageEmbed, User } from "discord.js";
+import { ColorResolvable, CommandInteraction, Interaction, Message, User } from "discord.js";
 import { getConnection, getRepository } from "typeorm";
 import { SlashCommandBuilder } from "@discordjs/builders"
 const { REST } = require('@discordjs/rest');
@@ -27,6 +27,7 @@ declare global
             b3id?: number,
             slot?: number,
             guid?: string,
+            group?: string,
             visible2all?: string,
             other?: any
         } & any,
@@ -83,6 +84,11 @@ export async function initCommandManager()
     // register link commands before others
     await registerLinkCommands();
 
+    //  group slash choices
+    var groupChoices: [name: string, value: string][] = [];
+    for( var i = 0; i < GlobalGroups.length; i++ )
+        groupChoices.push([ GlobalGroups[i].name ,GlobalGroups[i].keyword])
+
     // register default commands from default_cmds.json5
     for( var i = 0; i < defaultCmdsConfig.defaultCmds.length; i++ )
     {
@@ -99,45 +105,57 @@ export async function initCommandManager()
             const currentSlashCommand = slashCmds[slashCmds.length-1];
 
             // process acceptable command arguments
-            const accInput: any = cmd.acceptArgs;
+            // discord wants required options first, then optional options, so we need to sort
+            const accInput: any = Object.fromEntries(Object.entries(cmd.acceptArgs).sort( ([,x],[,y]) => (x === y)? 0 : x? -1 : 1 ));
 
-            if( accInput.target != undefined )
-                currentSlashCommand.addMentionableOption( opt => 
+            Object.keys(accInput).forEach( key => {
+                if( key == "target" )
+                    currentSlashCommand.addMentionableOption( opt => 
                             opt.setName("target")
                                 .setDescription("Mention a User")
                                 .setRequired(accInput.target)
                             );
-            if( accInput.b3id != undefined )
-                currentSlashCommand.addIntegerOption( opt => 
+                else if( key == "b3id" )
+                    currentSlashCommand.addIntegerOption( opt => 
                             opt.setName("b3id")
                                 .setDescription("B3 ID of player")
                                 .setMinValue(2)
                                 .setMaxValue(999999)
                                 .setRequired(accInput.b3id)
                             );
-            if( accInput.guid != undefined )
-                currentSlashCommand.addStringOption( opt => 
+                else if( key == "slot" )
+                    currentSlashCommand.addIntegerOption( opt => 
+                            opt.setName("slot")
+                                .setDescription("Slot of player if he's currently in-game")
+                                .setRequired(accInput.slot)
+                                .setMinValue(0)
+                                .setMaxValue(63)
+                            );
+                else if( key == "guid" )
+                    currentSlashCommand.addStringOption( opt => 
                             opt.setName("guid")
                                 .setDescription("GUID of player")
                                 .setRequired(accInput.guid)
                             );
-            if( accInput.slot != undefined )
-                currentSlashCommand.addIntegerOption( opt => 
-                            opt.setName("slot")
-                                .setDescription("Slot of player if he's currently in-game")
-                                .setRequired(accInput.slot)
-                            );
-            if( accInput.visible2all != undefined )
-                currentSlashCommand.addBooleanOption( opt =>
+                else if( key == "visible2all" )
+                    currentSlashCommand.addBooleanOption( opt =>
                             opt.setName("visible2all")
                                 .setDescription("If false, only you will be able to see response.")
                                 .setRequired(accInput.visible2all)
                             );
+                else if( key == "group" )
+                    currentSlashCommand.addStringOption( opt => 
+                            opt.setName("group")
+                                .setDescription("User or Admin group")
+                                .setRequired(accInput.group)
+                                .addChoices(groupChoices)
+                            );
+            });
         }
         
         var createCmd: Command = { ...cmd }
         globalThis.GlobalCommands.push(createCmd);
-    }  
+    }    
 
     await rest.put(
         Routes.applicationGuildCommands(discordClient.user?.id, discordClient.guildId ),
@@ -155,13 +173,14 @@ export async function initCommandManager()
 
 type CommandArgument = { 
     ctx: Message | CommandInteraction,
-    commander?: Clients, 
+    commander?: Clients | null, 
     cmd: Command, 
-    link?: Discod,
+    link?: Discod | null,
     target?: User,
     b3id?: number,
     slot?: number,
     guid?: string,
+    group?: string,
     visible2all?: boolean,
     other: any
 }
@@ -216,7 +235,10 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
         if( isInteraction )
         {
             ErrorHandler.minor(`Slash command don't seem to be recognized by disCOD, yet was called.`);
-            return await SendEmbed( { ctx, desc: mainconfig.msgs.err_in_cmd } );
+            return await ctx.reply({
+                embeds: [CreateBasicEmbed({desc: mainconfig.msgs.err_in_cmd})],
+                ephemeral: true,
+            });
         }
         else return await SendEmbed( { ctx, desc: `❌ Unrecognized Command` } );
     }
@@ -226,7 +248,7 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
 
     // run client and discod queries once
     const dcID = ctx instanceof Message? ctx.author.id : ctx.user.id;
-    const discodQ = await getRepository(Discod).findOne({where: {dcId: dcID}});
+    const discodQ = await getRepository(Discod).findOne({where: {dc_id: dcID}});
     
     // check if guy has permission
     const linkCheck = await checkLink( ctx, discodQ, cmd );
@@ -235,11 +257,11 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
     if( !linkCheck && cmd.minLevel > 0 )
         return;
 
-    var commander: Clients | undefined;
+    var commander: Clients | null;
 
     if( !linkCheck || discodQ == undefined )
-        commander = undefined;
-    else commander = await getRepository(Clients).findOne(discodQ.b3Id);
+        commander = null;
+    else commander = await getRepository(Clients).findOne({ where: { id: discodQ.b3_id } });
     
     // do i have access?
     const powerCheck = await checkPower( ctx, cmd, commander );
@@ -277,6 +299,9 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
             case "guid":
                 argObject.guid = argOpt.value as string;
                 break;
+            case "group":
+                argObject.group = argOpt.value as string;
+                break;
             case "visible2all":
                 argObject.visible2all = !!argOpt.value;
                 break;
@@ -296,7 +321,11 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
     catch(e)
     {
         ErrorHandler.minor(e);
-        return await SendEmbed({ ctx,desc: mainconfig.msgs.err_in_cmd });
+        await ctx.reply({
+                embeds: [CreateBasicEmbed({desc: mainconfig.msgs.err_in_cmd})],
+                ephemeral: true,
+            });
+        return;
     }
 
     if( response != undefined && response != "" )
@@ -351,33 +380,34 @@ interface ComMan
     getAllCommands(): Command[];
 }
 
-async function checkLink( ctx: Message | CommandInteraction, discodQ: Discod | undefined, cmd: Command ): Promise<boolean>
+async function checkLink( ctx: Message | CommandInteraction, discodQ: Discod | null, cmd: Command ): Promise<boolean>
 {
-    if( discodQ === undefined )
+    if( discodQ == undefined )
     {
         if( cmd.minLevel != 0 )
-            SendEmbed( {
-                ctx,
-                title: `❌ You haven't linked your B3 ID to disCOD yet.`,
-                desc: `Type **/help link** to know more`
+            await ctx.reply({
+                embeds: [CreateBasicEmbed({
+                    title: `❌ You haven't linked your B3 ID to disCOD yet.`,
+                    desc: `Type **/help link** to know more`})],
+                ephemeral: true,
             });
         return false;
     }
     else if( discodQ.linked == 0 )
     {
         if( cmd.minLevel != 0 )
-            SendEmbed( { 
-                ctx,
-                title: `❌ Your link is unverified`, 
-                // TO-DO: Link to dm channel
-                desc: `Check DM` 
+            await ctx.reply({
+                embeds: [CreateBasicEmbed({
+                    title: `❌ Your link is unverified`,
+                    desc: `Check DM` })],
+                ephemeral: true,
             });
         return false;
     }
     return true;
 }
 
-async function checkPower( ctx: Message | CommandInteraction, cmd: Command, client: Clients | undefined ): Promise<boolean>
+async function checkPower( ctx: Message | CommandInteraction, cmd: Command, client: Clients | null ): Promise<boolean>
 {
     if( cmd.minLevel == 0 )
         return true;
@@ -386,11 +416,11 @@ async function checkPower( ctx: Message | CommandInteraction, cmd: Command, clie
         return false;
 
     // check clients' power
-    var level = Ops.bitsToLevel( client.groupBits );
+    var level = Ops.bitsToLevel( client.group_bits );
 
     if( level == null )
     {
-        ErrorHandler.minor(`Client Level fetched bad. Client: @${client.id}.Fetched bits: ${client.groupBits}`);
+        ErrorHandler.minor(`Client Level fetched bad. Client: @${client.id}.Fetched bits: ${client.group_bits}`);
         SendEmbed({ ctx, desc: mainconfig.msgs.err_in_cmd });
         return false;
     }

@@ -13,6 +13,7 @@ export type CommandArgument = {
     b3id?: number,
     slot?: number,
     guid?: string,
+    group?: string,
     visible2all?: boolean,
     other: any
 }
@@ -29,16 +30,29 @@ type ReplyTo = {
 export async function getClientFromCommandArg(
         arg: CommandArgument, 
         replyTo?: ReplyTo
-    ): Promise< Clients | undefined >
+    ): Promise< Clients | undefined | null >
 {
     return new Promise( async(resolve,reject) => 
     {
         const embed = new MessageEmbed()
             .setColor(themeColor);
 
+        // if( !isDefined(arg.b3id) && !isDefined(arg.guid) && !isDefined(arg.slot) && !isDefined(arg.target) )
+        if( arg.b3id == undefined && arg.guid == undefined && arg.slot == undefined && arg.target == undefined )
+        {            
+            if( replyTo == undefined )
+            {
+                arg.ctx.reply({
+                    embeds: [embed.setDescription(`❌ Specify a player. Type **/help**`)],
+                    ephemeral: true,
+                });
+            }
+            reject("CLIENT_UNSPECIFIED");
+        }
+
         if( arg.b3id != undefined )
         {
-            const cl = await Clients.findOne(arg.b3id);
+            const cl = await Clients.findOne({where: { id: arg.b3id }});
             if( cl == undefined || arg.b3id < 2 )
             {
                 if( replyTo == undefined || ( replyTo != undefined && replyTo.BAD_B3ID != undefined && replyTo.BAD_B3ID ) )
@@ -48,13 +62,13 @@ export async function getClientFromCommandArg(
                     });
                 reject("BAD_B3ID");
             }
-            resolve(cl);
+            else resolve(cl);
         }
         else if( arg.guid != undefined )
         {
             const cl = await Clients.findOne({where: { guid: arg.guid }});
             
-            if( cl == undefined)
+            if( cl == null)
             {
                 if( replyTo == undefined || ( replyTo != undefined && replyTo.BAD_GUID != undefined && replyTo.BAD_GUID ) )
                     arg.ctx.reply({
@@ -63,13 +77,18 @@ export async function getClientFromCommandArg(
                     })
                 reject("BAD_GUID");
             }
-            resolve(cl);
+            else resolve(cl);
         }
         else if( arg.target != undefined )
         {
-            const q = await rawQuery(`SELECT clients.* FROM clients,discod WHERE dc_id = ${arg.target.id} AND clients.id=discod.b3_id`);
+            
+            const q: [Clients] = await getRepository(Clients).createQueryBuilder("clients")
+                                        .leftJoin( Discod, "discod", "discod.dc_id = :dcID", { dcID: arg.target.id } )
+                                        .select(["clients.*"])
+                                        .where("clients.id = discod.b3_id")
+                                        .execute();
 
-            if( q[0] == undefined)
+            if( q[0] == undefined )
             {
                 if( replyTo == undefined || ( replyTo != undefined && replyTo.NO_LINK != undefined && replyTo.NO_LINK ) )
                     arg.ctx.reply({
@@ -78,7 +97,7 @@ export async function getClientFromCommandArg(
                     })
                 reject("NO_LINK");
             }
-            resolve( q[0] as Clients );
+            else resolve( q[0] as Clients);
         }
         else if( arg.slot != undefined )
         {
@@ -98,7 +117,7 @@ export async function getClientFromCommandArg(
         {
             if( arg.commander != undefined )
             {
-                const cl = await Clients.findOne(arg.commander.id);
+                const cl = await Clients.findOne({where: { id: arg.commander.id }});
                 resolve(cl);
             }
             else return undefined;
@@ -108,7 +127,7 @@ export async function getClientFromCommandArg(
 }
 
 
-globalThis.getLink = async( client: Clients | number ): Promise< Discod | undefined > =>
+globalThis.getLink = async( client: Clients | number ): Promise< Discod | null> =>
 {
     const q = await getRepository(Discod).createQueryBuilder("discod")
                                     .where( "discod.b3_id = :id", {id: typeof client == "number"? client : client.id })

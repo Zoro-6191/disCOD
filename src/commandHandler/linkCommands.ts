@@ -2,8 +2,9 @@ import { Message, MessageEmbed, User } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders"
 const { Routes } = require('discord-api-types/v9');
 import { getRepository } from "typeorm";
+import fetch from "node-fetch";
 
-import { CommandArgument } from "./helper";
+import { CommandArgument, CommandResponse } from "./helper";
 import { Clients } from "../entity/Clients";
 import { Discod } from "../entity/Discod";
 import { rest } from ".";
@@ -12,6 +13,8 @@ const linkCmds: Command[] = [];
 
 const tickImageURL = `https://cdn.discordapp.com/attachments/719492117294088252/949789685444657233/721-7212637_done-icon-white-png-transparent-png.png`;
 const alertImageURL = `https://cdn.discordapp.com/attachments/719492117294088252/949948729228656650/1200px-OOjs_UI_icon_alert-yellow.svg.png`;
+
+var sourceEmbed: MessageEmbed;
 
 linkCmds[0] = {
     name: "link",
@@ -67,6 +70,18 @@ linkCmds[3] = {
         b3id: false
     },
     callback: cmd_forceunlink as any,
+}
+
+linkCmds[4] = {
+    name: "source",
+    alias: [],
+    description: "Force Un-link a player",
+    // process minlevel to highest level
+    minLevel: 0,
+    type: "both",
+    visibleToAllByDefault: true,
+    acceptArgs: {},
+    callback: cmd_source as any,
 }
 
 export async function registerLinkCommands()
@@ -131,10 +146,47 @@ export async function registerLinkCommands()
         // discordClient.application?.commands.create(slashCommand as any);
     }
     
-    await rest.put(
-        Routes.applicationGuildCommands(discordClient.user?.id, discordClient.guildId ),
-        { body: cmds },
-    );
+    // await rest.put(
+    //     Routes.applicationGuildCommands(discordClient.user?.id, discordClient.guildId ),
+    //     { body: cmds },
+    // );
+
+    // preprocess cmd_source embed
+    sourceEmbed = new MessageEmbed().setColor(themeColor);
+
+    const fec = await fetch(`https://api.github.com/repos/Zoro-6191/disCOD`);
+    const data: any = await fec.json();
+
+    if( data?.message == 'Not Found' )
+        return sourceEmbed.setTitle( `Not Found` );
+
+    if( data?.private )
+    {
+        sourceEmbed.setThumbnail(data.owner.avatar_url)
+            .setTitle( `This bot is not Open Source :/` )
+            .setDescription( `[${data.owner.html_url}](${data.owner.html_url})` )
+
+        return sourceEmbed;
+    }
+
+    sourceEmbed.setThumbnail(data?.owner?.avatar_url)
+        .setTitle( `${data?.full_name}` )
+        .setDescription(`[${data?.html_url}](${data?.html_url})
+        Created: ${timeConvert(data?.created_at)}
+        Last Updated: ${timeConvert(data?.updated_at)}
+        Language: ${data?.language}`);
+
+    const fec2 = await fetch(`https://api.github.com/repos/jyotirmay-exe/b3-plugin-disCOD`);
+
+    const data2: any = await fec2.json();
+
+    sourceEmbed
+        .addField( `B3 Plugin`,`[${data2?.html_url}](${data2?.html_url})
+        Created: ${timeConvert(data2?.created_at)}
+        Last Updated: ${timeConvert(data2?.updated_at)}
+        Language: ${data2?.language}`);
+    
+    return;
 }
 
 
@@ -149,9 +201,9 @@ export async function cmd_link(
         return embed.setDescription(`🔗 You're already linked to \`@${arg.commander.id}\``);
     else if( arg.link != undefined && arg.commander == undefined )
     {
-        if( arg.link.b3Id == arg.b3id )
+        if( arg.link.b3_id == arg.b3id )
             return embed.setDescription(`🔗 Linked already initiated to \`@${arg.b3id}\`\nCheck DM.`);
-        else return embed.setDescription(`❌ Linked already initiated to \`@${arg.link.b3Id}\`\n**/unlink** before linking new ID.`);
+        else return embed.setDescription(`❌ Linked already initiated to \`@${arg.link.b3_id}\`\n**/unlink** before linking new ID.`);
     }
     else if( arg.link == undefined && arg.commander != undefined )
         throw new Error(`Link: commander and link fetched different`);
@@ -166,11 +218,11 @@ export async function cmd_link(
     var dmMsg: any;
 
     // check if id already exists
-    const exisChec = await getRepository(Discod).findOne( { where: { b3Id: arg.b3id }} );
+    const exisChec = await getRepository(Discod).findOne( { where: { b3_id: arg.b3id }} );
     if( exisChec != undefined )
     {
-        if( exisChec.dcId != user.id && exisChec.linked == 1 )
-            return embed.setDescription(`❌ ID is already linked to <@${exisChec.dcId}>`);
+        if( exisChec.dc_id != user.id && exisChec.linked == 1 )
+            return embed.setDescription(`❌ ID is already linked to <@${exisChec.dc_id}>`);
         // do we want to stop current link or delete older link and relink??
         else await getRepository(Discod).delete(exisChec.id);
     }
@@ -229,12 +281,12 @@ export async function cmd_unlink(
     if( arg.link == undefined )
         return embed.setDescription(`❌ Link doesn't exist`);
 
-    await rawQuery(`DELETE FROM discod WHERE b3_id = ${arg.link.b3Id} OR dc_id = ${arg.link.dcId}`);
+    await rawQuery(`DELETE FROM discod WHERE b3_id = ${arg.link.b3_id} OR dc_id = ${arg.link.dc_id}`);
 
     // Emit unlink event
     events.emit("unlink", arg );
 
-    return embed.setDescription(`✅ Unlinked from \`@${arg.link.b3Id}\``);
+    return embed.setDescription(`✅ Unlinked from \`@${arg.link.b3_id}\``);
 }
 
 export async function cmd_forcelink( arg: { 
@@ -309,4 +361,19 @@ export async function cmd_forceunlink( arg: CommandArgument ): Promise<MessageEm
     events.emit("forcelink", arg );
 
     return embed.setDescription(`Unlinked  ${discordClient.users.cache.find( user => user.id == exisChec[0].dc_id )} from \`@${exisChec[0].b3_id}\``);
+}
+
+export async function cmd_source(): Promise< CommandResponse >
+{
+    return sourceEmbed;
+}
+
+function timeConvert( str: any )
+{
+    str = str.split('Z')[0].split('T');
+
+    var date = str[0];
+    var time = str[1];
+
+    return `${date} ${time}`
 }

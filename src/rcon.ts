@@ -35,6 +35,8 @@ interface RconClient
     rconpass: string | undefined;
     connected: boolean;
     
+    fast_restart(): Promise<void>;
+
     /**
      * Similar to GSC
      * @param  {string} dvar
@@ -88,6 +90,7 @@ interface RconClient
     getServerOs(): string | undefined;
     kick( slot: number | string, reason?: string ): Promise<string>;
     quit(): Promise<boolean>;
+    say( text: string ): Promise<void>;
     sendRconCommand( cmd: string ): Promise<string>;
     serverinfo(): Promise<object>;
     setDvar( dvar: string, value: string | number ): Promise<boolean>;
@@ -261,6 +264,11 @@ class CreateRconConnection implements RconClient
         this.socket.send(msg, this.port, this.ip );
     }
 
+    public async fast_restart(): Promise<void> 
+    {
+        await this.onlySend(`fast_restart`);
+    }
+
     public async getDvar(dvar: string): Promise<string | number | boolean> 
     {
         const resp = await this.sendRconCommand(dvar)    ;
@@ -362,6 +370,12 @@ class CreateRconConnection implements RconClient
             onlinePlayers: await this.getOnlinePlayers({status: status})
         }
         return toRet;
+    }
+
+    private async onlySend( cmd: string ): Promise<void>
+    {
+        const encodedMsg: string = await this.encodeOutgoingMsg(`rcon ${this.rconpass} ${cmd}`);
+        await this.sendUDPMessage( encodedMsg );
     }
 
     private pasreRconInfo( info: string ): RconInfo
@@ -486,6 +500,11 @@ class CreateRconConnection implements RconClient
     public getModName(): string
     {
         return this.modname;
+    }
+
+    public async say( text: string ): Promise<void>
+    {
+        await this.onlySend(`say ${text}`);
     }
 
     public async sendRconCommand( cmd: string ): Promise<string>

@@ -49,7 +49,7 @@ export class Groups extends BaseEntity
         nullable: false,
         default: () => "'0'" 
     })
-    timeEdit: number;
+    time_edit: number;
 
     // `time_add` INT(10) UNSIGNED NOT NULL DEFAULT '0',
     @Column("int", { 
@@ -58,5 +58,5 @@ export class Groups extends BaseEntity
         nullable: false,
         default: () => "'0'" 
     })
-    timeAdd: number;
+    time_add: number;
 }

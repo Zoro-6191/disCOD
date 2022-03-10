@@ -34,8 +34,8 @@ export async function initGroups(): Promise<void>
                 keyword: group.keyword,
                 level: group.level,
                 name: group.name,
-                time_add: group.timeAdd,
-                time_edit: group.timeEdit 
+                time_add: group.time_add,
+                time_edit: group.time_edit 
             })
         })
 
@@ -48,18 +48,15 @@ export async function initGroups(): Promise<void>
 
 interface GroupOps 
 {
-    bitsToLevel( bits: number ): number | null;
-    bitsToKeyword( bits: number ): string | null;
-    bitsToName( bits: number ): string | null;
-    keywordToBits( keyword: string ): number | null;
-    keywordToLevel( keyword: string ): number | null;
-    keywordToName( keyword: string ): string | null;
-    levelToBits( level: number ): number | null;
-    levelToKeyword( level: number ): string | null;
-    levelToName( level: number ): string | null;
-}
-
-interface GroupMan {
+    bitsToLevel( bits: number ): number | undefined;
+    bitsToKeyword( bits: number ): string | undefined;
+    bitsToName( bits: number ): string | undefined;
+    keywordToBits( keyword: string ): number | undefined;
+    keywordToLevel( keyword: string ): number | undefined;
+    keywordToName( keyword: string ): string | undefined;
+    levelToBits( level: number ): number | undefined;
+    levelToKeyword( level: number ): string | undefined;
+    levelToName( level: number ): string | undefined;
     getAllGroups(): GlobalGroup[];
     getGroupFromLevel( level: number ): GlobalGroup | undefined;
     getGroupFromBits( bits: number ): GlobalGroup | undefined;
@@ -67,7 +64,6 @@ interface GroupMan {
     isValidLevel( level: number ): boolean;
     isValidKeyword( keyword: string ): boolean;
     isValidBits( bits: number ): boolean;
-    Ops: GroupOps
 }
 
 function isValidLevel(level: number): boolean {
@@ -137,37 +133,44 @@ export var Ops: GroupOps = {
     keywordToBits,
     keywordToLevel,
     keywordToName,
+    getGroupFromLevel,
+    getAllGroups,
+    getGroupFromBits,
+    getGroupFromKeyword,
+    isValidBits,
+    isValidKeyword,
+    isValidLevel,
 }
 
-function bitsToKeyword(bits: number): string | null {
+function bitsToKeyword(bits: number): string | undefined {
     return compare< typeof bits, string >( "bits", bits, "keyword" );
 }
-function bitsToName(bits: number): string | null {
+function bitsToName(bits: number): string | undefined {
     return compare< typeof bits, string >( "bits", bits, "name" );
 }
-function bitsToLevel(bits: number): number | null {
+function bitsToLevel(bits: number): number | undefined {
     return compare< typeof bits, number >( "bits", bits, "level" );
 }
-function keywordToBits(keyword: string): number | null {
+function keywordToBits(keyword: string): number | undefined {
     return compare< typeof keyword, number >( "keyword", keyword, "bits" );
 }
-function keywordToLevel(keyword: string): number | null {
+function keywordToLevel(keyword: string): number | undefined {
     return compare< typeof keyword, number >( "keyword", keyword, "level" );
 }
-function keywordToName(keyword: string): string | null {
+function keywordToName(keyword: string): string | undefined {
     return compare< typeof keyword, string >( "keyword", keyword, "name" );    
 }
-function levelToBits(level: number): number | null {
+function levelToBits(level: number): number | undefined {
     return compare< typeof level, number >( "level", level, "bits" );    
 }
-function levelToKeyword(level: number): string | null {
+function levelToKeyword(level: number): string | undefined {
     return compare< typeof level, string >( "level", level, "keyword" );
 }
-function levelToName(level: number): string | null {
+function levelToName(level: number): string | undefined {
     return compare< typeof level, string >( "level", level, "name" );
 }
 
-function compare<T1, T2>( p1: string, p2: T1, toreturn: string ): T2 | null
+function compare<T1, T2>( p1: string, p2: T1, toreturn: string ): T2 | undefined
 {
     for( var i = 0; i < GlobalGroups.length; i++ )
     {
@@ -176,18 +179,7 @@ function compare<T1, T2>( p1: string, p2: T1, toreturn: string ): T2 | null
         if( (group as any)[p1] == p2 )
             return (group as any)[toreturn];
     }
-    return null;
+    return undefined;
 }
 
-var GroupManager: GroupMan = {
-    getGroupFromLevel,
-    getAllGroups,
-    getGroupFromBits,
-    getGroupFromKeyword,
-    isValidBits,
-    isValidKeyword,
-    isValidLevel,
-    Ops,
-}
-
-export default GroupManager;
+export default Ops;

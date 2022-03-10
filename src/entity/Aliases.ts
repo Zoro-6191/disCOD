@@ -1,7 +1,7 @@
 import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
-@Index("alias", ["alias", "clientId"], { unique: true })
-@Index("client_id", ["clientId"], {})
+@Index("alias", ["alias", "client_id"], { unique: true })
+@Index("client_id", ["client_id"], {})
 @Entity("aliases")
 export class Aliases
 {
@@ -19,7 +19,7 @@ export class Aliases
         unsigned: true, 
         default: () => "'0'" 
     })
-    numUsed: number;
+    num_used: number;
 
     // `alias` VARCHAR(32) NOT NULL DEFAULT '',
     @Column("varchar", { 
@@ -37,7 +37,7 @@ export class Aliases
         nullable: false,
         default: () => "'0'" 
     })
-    clientId: number;
+    client_id: number;
 
     // `time_add` INT(10) UNSIGNED NOT NULL DEFAULT '0',
     @CreateDateColumn({ 
@@ -47,7 +47,7 @@ export class Aliases
         nullable: false,
         default: () => "'0'" 
     })
-    timeAdd: number;
+    time_add: number;
 
     // `time_edit` INT(10) UNSIGNED NOT NULL DEFAULT '0',
     @UpdateDateColumn({ 
@@ -57,5 +57,5 @@ export class Aliases
         nullable: false,
         default: () => "'0'" 
     })
-    timeEdit: number;
+    time_edit: number;
 }

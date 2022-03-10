@@ -13,44 +13,44 @@ export class CurrentClients extends BaseEntity
         name: "Updated", 
         length: 25 
     })
-    updated: string;
+    Updated: string;
 
     @Column("varchar", { name: "Name", length: 32 })
-    name: string;
+    Name: string;
 
     @Column("int", { name: "Level" })
-    level: number;
+    Level: number;
 
     @Column("int", { name: "DBID" })
-    dbid: number;
+    DBID: number;
 
     @Column("varchar", { name: "CID", length: 32 })
-    cid: string;
+    CID: string;
 
     @Column("varchar", { name: "Joined", length: 25 })
-    joined: string;
+    Joined: string;
 
     @Column("int", { name: "Connections" })
-    connections: number;
+    Connections: number;
 
     @Column("int", { name: "State" })
-    state: number;
+    State: number;
 
     @Column("int", { name: "Score" })
-    score: number;
+    Score: number;
 
     @Column("varchar", { name: "IP", length: 16 })
-    ip: string;
+    IP: string;
 
     @Column("varchar", { name: "GUID", length: 36 })
-    guid: string;
+    GUID: string;
 
     @Column("varchar", { name: "PBID", length: 32 })
-    pbid: string;
+    PBID: string;
 
     @Column("int", { name: "Team" })
-    team: number;
+    Team: number;
 
     @Column("varchar", { name: "ColorName", length: 32 })
-    colorName: string;
+    ColorName: string;
 }

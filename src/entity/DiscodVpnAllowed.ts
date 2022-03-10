@@ -1,6 +1,6 @@
 import { BaseEntity, Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 
-@Index("client_id", ["clientId"], { unique: true })
+@Index("client_id", ["client_id"], { unique: true })
 @Entity("discod_vpn_allowed")
 export class DiscodVpnAllowed extends BaseEntity
 {
@@ -14,5 +14,5 @@ export class DiscodVpnAllowed extends BaseEntity
         name: "client_id", 
         unique: true 
     })
-    clientId: number;
+    client_id: number;
 }

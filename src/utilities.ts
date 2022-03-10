@@ -29,7 +29,7 @@ declare global
      * @param  {Clients|number} client | B3 ID
      * returns `Discod` entity
      */
-    var getLink: (client: Clients) => Promise<Discod | undefined>;
+    var getLink: (client: Clients) => Promise<Discod | null>;
     
     /**
      * `isDefined()` method like in COD GSC Script
@@ -63,6 +63,8 @@ declare global
      * returns directly usable string
      */
     var getAliasString: ( client: Clients | { id: number, name: string }, charLength: number ) => Promise<string>;
+
+    var getReadableDateFromTimestamp: ( timestamp: number ) => string;
 }
 
 String.prototype.removeCodColors = function(): string
@@ -140,8 +142,8 @@ globalThis.getAliasString = async ( client: Clients | { id: number, name: string
 {
     const aliases = await getRepository( Aliases ).createQueryBuilder("aliases")
                                                     .select("aliases.alias")
-                                                    .where("aliases.clientId = :id", {id: client.id})
-                                                    .orderBy("aliases.numUsed", "DESC")
+                                                    .where("aliases.client_id = :id", {id: client.id})
+                                                    .orderBy("aliases.num_used", "DESC")
                                                     // .cache(true)
                                                     .getMany();
                                                     // find( { where: { clientId: client.id }} )
@@ -188,6 +190,14 @@ globalThis.wait = (ms: number) =>
 export function kill()
 {
     return process.exit(1);
+}
+
+globalThis.getReadableDateFromTimestamp = ( timestamp: number ): string => 
+{
+    const poop = new Date(timestamp*1000); 
+    
+    return poop.toDateString();    
+    return poop.getHours()+":"+poop.getMinutes().toString()+" "+poop.getDate()+"/"+(poop.getMonth()+1)+"/"+poop.getFullYear();
 }
 
 export class Timer

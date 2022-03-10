@@ -10,11 +10,11 @@ enum PenaltyType {
 
 @Index("keyword", ["keyword"], {})
 // @Index("type", ["type"], {})
-@Index("time_expire", ["timeExpire"], {})
-@Index("time_add", ["timeAdd"], {})
-@Index("admin_id", ["adminId"], {})
+@Index("time_expire", ["time_expire"], {})
+@Index("time_add", ["time_add"], {})
+@Index("admin_id", ["admin_id"], {})
 @Index("inactive", ["inactive"], {})
-@Index("client_id", ["clientId"], {})
+@Index("client_id", ["client_id"], {})
 @Entity("penalties")
 export class Penalties 
 {
@@ -26,17 +26,17 @@ export class Penalties
     id: number;
 
     @Column("enum", {
-      name: "type",
-      enum: PenaltyType,
-      default: () => "'Ban'",
+        name: "type",
+        enum: PenaltyType,
+        default: "Ban",
     })
     type: PenaltyType;
 
     @Column("int", { name: "client_id", unsigned: true, default: () => "'0'" })
-    clientId: number;
+    client_id: number;
 
     @Column("int", { name: "admin_id", unsigned: true, default: () => "'0'" })
-    adminId: number;
+    admin_id: number;
 
     @Column("int", { name: "duration", unsigned: true, default: () => "'0'" })
     duration: number;
@@ -54,11 +54,11 @@ export class Penalties
     data: string;
 
     @Column("int", { name: "time_add", unsigned: true, default: () => "'0'" })
-    timeAdd: number;
+    time_add: number;
 
     @Column("int", { name: "time_edit", unsigned: true, default: () => "'0'" })
-    timeEdit: number;
+    time_edit: number;
 
     @Column("int", { name: "time_expire", default: () => "'0'" })
-    timeExpire: number;
+    time_expire: number;
 }
