@@ -1,4 +1,5 @@
 //const fs = require('fs')
+const chokidar = require('chokidar');
 const fs = require('fs-extra')
 const discord = require('src/discordclient')
 const { MessageEmbed } = require('discord.js')
@@ -36,14 +37,15 @@ module.exports =
            return ErrorHandler.minor(` Specified "channel_id" in plugin config "./conf/plugin_chatlogger.json" does not exist. Plugin will not work`)
         }
 
-        if (statsUrl == "") {
+        if (statsUrl == "") { 
             statsUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
             ErrorHandler.minor(`"playerstatsLink" in plugin config "./conf/plugin_chatlogger.json" not defined. Using default Link.`)
         }
 
-
-        fs.watchFile(content, async (eventType, filename) => {
-            fs.readFile(content, 'utf-8', async (err, data) => {
+            chokidar.watch(content).on('change', async (path) => {
+            
+              fs.readFile(path, 'utf-8', async (err, data) => {
+           
 
         // display an error if file is not readable
         if (err) {
@@ -77,7 +79,7 @@ module.exports =
                 b3id = await getB3ID(lineArray1[1])
 
                 var lineToSend = `**[${lineArray1[3]}](${statsUrl}${b3id})** Said: ${lineArray1[4].replace("", "").replace("", "")}`
-                
+
                 const embed2 = new MessageEmbed()
                 .setColor("#ff0000")
                 .setDescription(lineToSend)
