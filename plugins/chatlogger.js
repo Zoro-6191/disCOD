@@ -36,6 +36,11 @@ module.exports =
            return ErrorHandler.minor(` Specified "channel_id" in plugin config "./conf/plugin_chatlogger.json" does not exist. Plugin will not work`)
         }
 
+        if (statsUrl == "") {
+            statsUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            ErrorHandler.minor(`"playerstatsLink" in plugin config "./conf/plugin_chatlogger.json" not defined. Using default Link.`)
+        }
+
 
         fs.watchFile(content, async (eventType, filename) => {
             fs.readFile(content, 'utf-8', async (err, data) => {
@@ -58,11 +63,6 @@ module.exports =
 
                 var lineToSend = `**[${lineArray[3]}](${statsUrl}${b3id})** Said: ${lineArray[4].replace("", "").replace("", "")}`
 
-                if (statsUrl == "") {
-                    var lineToSend = `**[${lineArray[3]}](https://www.youtube.com/watch?v=dQw4w9WgXcQ)** Said: ${lineArray[4].replace("", "").replace("", "")}`
-                    ErrorHandler.minor(`"playerstatsLink" in plugin config "./conf/plugin_chatlogger.json" not defined. Using default Link.`)
-                }
-
                 const embed = new MessageEmbed()
                 .setColor(embed_color)
                 .setDescription(lineToSend)
@@ -77,12 +77,7 @@ module.exports =
                 b3id = await getB3ID(lineArray1[1])
 
                 var lineToSend = `**[${lineArray1[3]}](${statsUrl}${b3id})** Said: ${lineArray1[4].replace("", "").replace("", "")}`
-
-                if (statsUrl == "") {
-                    var lineToSend = `**[${lineArray1[3]}](https://www.youtube.com/watch?v=dQw4w9WgXcQ)** Said: ${lineArray1[4].replace("", "").replace("", "")}`
-                    ErrorHandler.minor(`"playerstatsLink" in plugin config "./conf/plugin_chatlogger.json" not defined. Using default Link.`)
-                }
-
+                
                 const embed2 = new MessageEmbed()
                 .setColor("#ff0000")
                 .setDescription(lineToSend)
