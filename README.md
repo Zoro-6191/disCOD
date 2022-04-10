@@ -50,7 +50,9 @@ Steps:
     ```
     git clone https://github.com/Zoro-6191/disCOD.git
     cd disCOD
+    npm install -g typescript pm2
     npm run prebuild
+    npm run build
     ```
 - After [configuring](#configuring-discod), run disCOD using:
     ```
@@ -64,6 +66,9 @@ Steps:
     ```
     git clone https://github.com/Zoro-6191/disCOD.git
     cd disCOD
+    npm install -g typescript pm2
+    npm run prebuild
+    npm run build
     ```
 - After [configuring](#configuring-discod), run disCOD using:
     ```
@@ -71,5 +76,5 @@ Steps:
     ```
 
 # Configuring disCOD
-- Go to `buid/conf`, edit `config.json`(main config)
-- All of the configs are explainatory, but make sure to stick to JSON syntax
+- Go to `build/conf`, edit `config.json`(main config)
+- All of the configs are explainatory, but be sure to stick to [JSON5](https://json5.org/) syntax

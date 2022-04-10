@@ -386,9 +386,6 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
             other: {}
         };
     }
-    
-    console.log("Data:",_opt.data);
-    
 
     for( var i = 0; i < _opt.data.length; i++ )
     {

@@ -301,6 +301,21 @@
                 visible2all: false,
             },
             visibleToAllByDefault: true,
+        },
+        {
+            name: "xlrstats",
+            description: "XLR Stats of a player",
+            minLevel: 1,
+            alias: [ "xlr" ],
+            type: "slash",
+            acceptArgs: {
+                target: false,
+                b3id: false,
+                slot: false,
+                guid: false,
+                visible2all: false
+            },
+            visibleToAllByDefault: true,
         }
     ]
 }

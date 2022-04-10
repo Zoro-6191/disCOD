@@ -7,6 +7,7 @@ import { getClientFromCommandArg, CommandArgument, CommandResponse } from "./hel
 import { Penalties } from "../entity/Penalties";
 import { Discod } from "../entity/Discod";
 import mainConfig from "../conf/config.json5";
+import { XlrPlayerstats } from "../entity/XlrPlayerstats";
 
 export async function cmd_aliases( arg: CommandArgument ): Promise< CommandResponse >
 {
@@ -477,8 +478,9 @@ export async function cmd_list(): Promise<CommandResponse>
         
         var fieldContent = ``;
 
-        if( player.dc_id != undefined )
-            fieldContent += `<@${player.dc_id}>\n`
+        if( player.dc_id != null )
+            fieldContent += `<@${player.dc_id}>\n`;
+        else fieldContent += `\`@${player.id}\`\n`;
 
         if( player.mask_level > 0 )
             var group = Ops.getGroupFromLevel( player.mask_level );
@@ -505,6 +507,7 @@ export async function cmd_list(): Promise<CommandResponse>
 
             if( player.dc_id != null )
                 fieldContent += `<@${player.dc_id}>\n`;
+            else fieldContent += `\`@${player.id}\`\n`;
 
             if( player.mask_level > 0 )
                 var group = Ops.getGroupFromLevel( player.mask_level );
@@ -749,4 +752,44 @@ export async function cmd_getss( arg: CommandArgument ): Promise<CommandResponse
     const response = await rcon.getss( arg.slot );
 
     return embed.setDescription(response);
+}
+
+export async function cmd_xlrstats( arg: CommandArgument ): Promise<CommandResponse>
+{
+    const embed = new MessageEmbed().setColor(themeColor);
+
+    var client: Clients | undefined | null;
+    var link: Discod | null;
+
+    if( !isDefined(arg.b3id) && !isDefined(arg.target) )
+    {
+        client = arg.commander;
+        link = arg.link as Discod | null;
+    }
+    else 
+    {
+        client = await getClientFromCommandArg( arg );
+        if( client == undefined )
+            return;
+        link = await getLink(client);
+    }
+    if( client == undefined )
+        throw new Error("CLIENT_UNDEFINED");
+        
+    const stats = await getRepository(XlrPlayerstats).findOne( { where: { client_id: client.id }});
+
+    var str = ``;
+
+    if( link != undefined )
+        str += `<@${link.dc_id}> `;
+    
+    str += `${client.name} \`@${client.id}\`**\n`;
+
+    if( stats == undefined )
+        return embed.setDescription( str + " hasn't registered yet");
+
+    str += `\`\`\`c
+Kills: ${stats.kills}\nDeaths: ${stats.deaths}\nKDR: ${stats.ratio}\nSkill: ${stats.skill}\nRounds Played: ${stats.rounds}\nMax Win Streak: ${stats.winstreak}\`\`\``
+
+    return embed.setDescription("**XLR Stats for " + str);
 }
