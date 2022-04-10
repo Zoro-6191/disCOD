@@ -547,14 +547,14 @@ export async function cmd_lookup( arg: CommandArgument ): Promise<CommandRespons
 {
     const embed = new MessageEmbed().setColor(themeColor);
 
-    if( arg.other == undefined || arg.other.name == "" )
+    if( arg.name == undefined || arg.name == "" )
         return embed.setDescription(`❌ Enter a name to lookup`);
 
     const query = await rawQuery(`SELECT clients.*,discod.dc_id FROM clients 
                 LEFT JOIN discod ON discod.b3_id = clients.id
-                WHERE clients.name LIKE "%${arg.other.name}%" ORDER BY clients.time_edit DESC LIMIT 12`);
+                WHERE clients.name LIKE "%${arg.name}%" ORDER BY clients.time_edit DESC LIMIT 12`);
 
-    embed.setTitle(`Database search for "${arg.other.name}": ${query.length} matches` );
+    embed.setTitle(`Database search for "${arg.name}": ${query.length} matches` );
 
     for( var i = 0; i < query.length; i++ )
     {
@@ -568,7 +568,7 @@ export async function cmd_lookup( arg: CommandArgument ): Promise<CommandRespons
         fieldContent += `${Ops.bitsToName(player.group_bits)}`
 
         embed.addField(`${player.name} @${player.id}`,fieldContent,true);
-    }    
+    }
 
     return embed;
 }

@@ -7,7 +7,7 @@
     themeColor: "#696969",
 
     // debug mode: print excessive information to the console.
-    debug: true,
+    debug: false,
     
     // server timezone
     timezone: "IST",
