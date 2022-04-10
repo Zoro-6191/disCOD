@@ -14,6 +14,7 @@ import { Clients } from "../entity/Clients";
 import { registerLinkCommands } from "./linkCommands";
 import { Discod } from "../entity/Discod";
 import { CommandResponse } from "./helper";
+import { Timer } from "../utilities";
 
 declare global 
 {
@@ -23,14 +24,18 @@ declare global
         type: "slash" | "prefix" | "both",
         visibleToAllByDefault: boolean,
         acceptArgs: { 
-            target?: User, 
-            b3id?: number,
-            slot?: number,
-            guid?: string,
-            group?: string,
-            visible2all?: string,
-            other?: any
-        } & any,
+            target?: boolean, 
+            b3id?: boolean,
+            slot?: boolean,
+            guid?: boolean,
+            name?: boolean,
+            text?: boolean,
+            group?: boolean,
+            maptoken?: boolean,
+            gametype?: boolean,
+            visible2all?: boolean,
+            other?: OtherCommandArg[]
+        },
         minLevel: number,
         callback: ( args: CommandArgument ) => Promise<CommandResponse>,
         // helpMsg: string,
@@ -41,6 +46,13 @@ declare global
     // TO-DO: do we want this? or /commands? or both?
     var cmdPrefix: string;
     var themeColor: ColorResolvable;
+}
+
+export type OtherCommandArg = {
+    name: string;
+    type: "string" | "int" | "mention" | "boolean" | "number" | "channel" | "role",
+    required: boolean,
+    description?: string
 }
 
 var CommandManager: ComMan = {
@@ -84,10 +96,20 @@ export async function initCommandManager()
     // register link commands before others
     await registerLinkCommands();
 
-    //  group slash choices
+    //  slash choices
     var groupChoices: [name: string, value: string][] = [];
     for( var i = 0; i < GlobalGroups.length; i++ )
-        groupChoices.push([ GlobalGroups[i].name ,GlobalGroups[i].keyword])
+        groupChoices.push([ GlobalGroups[i].name, GlobalGroups[i].keyword ]);
+    
+    var mapChoices: [name: string, value: string][] = [];
+    Object.keys(GlobalMaps).forEach( (key: string) => {
+        mapChoices.push([ (GlobalMaps as any)[key], key ]);
+    })
+
+    var gametypeChoices: [name: string, value: string][] = [];
+    Object.keys(GlobalGametypes).forEach( (key: string) => {
+        gametypeChoices.push([ (GlobalGametypes as any)[key], key ]);
+    })
 
     // register default commands from default_cmds.json5
     for( var i = 0; i < defaultCmdsConfig.defaultCmds.length; i++ )
@@ -131,11 +153,37 @@ export async function initCommandManager()
                                 .setMinValue(0)
                                 .setMaxValue(63)
                             );
+                else if( key == "text" )
+                    currentSlashCommand.addStringOption( opt => 
+                                opt.setName("text")
+                                    .setDescription("Enter any text")
+                                    .setRequired(accInput.text)
+                                );
+                else if( key == "name" )
+                    currentSlashCommand.addStringOption( opt => 
+                                opt.setName("name")
+                                    .setDescription("Name of online player")
+                                    .setRequired(accInput.name)
+                                );
                 else if( key == "guid" )
                     currentSlashCommand.addStringOption( opt => 
                             opt.setName("guid")
                                 .setDescription("GUID of player")
                                 .setRequired(accInput.guid)
+                            );
+                else if( key == "maptoken" )
+                    currentSlashCommand.addStringOption( opt => 
+                            opt.setName("maptoken")
+                                .setDescription("Token of map, like mp_crash")
+                                .setRequired(accInput.maptoken)
+                                .setChoices(mapChoices)
+                            );
+                else if( key == "gametype" )
+                    currentSlashCommand.addStringOption( opt => 
+                            opt.setName("gametype")
+                                .setDescription("Gametype Token, like dm or sd")
+                                .setRequired(accInput.gametype)
+                                .setChoices(gametypeChoices)
                             );
                 else if( key == "visible2all" )
                     currentSlashCommand.addBooleanOption( opt =>
@@ -150,6 +198,58 @@ export async function initCommandManager()
                                 .setRequired(accInput.group)
                                 .addChoices(groupChoices)
                             );
+                else if( key == "other" && cmd.acceptArgs.other != undefined && cmd.acceptArgs.other.length > 0 )
+                {
+                    // again, need to register required first smh
+                    const sorted = cmd.acceptArgs.other.sort( (a: any,b: any) => a.required == b.required? 0 : a.required? -1 : 1 );
+
+                    for( var k = 0; k < sorted.length; k++ )
+                    {
+                        const cmdd = sorted[k];
+                        if( cmdd.type == "string" )
+                            currentSlashCommand.addStringOption( opt => 
+                                opt.setName(cmdd.name)
+                                    .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
+                                    .setRequired(cmdd.required)
+                                );
+                        else if( cmdd.type == "boolean" )
+                            currentSlashCommand.addBooleanOption( opt => 
+                                opt.setName(cmdd.name)
+                                    .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
+                                    .setRequired(cmdd.required)
+                                );
+                        else if( cmdd.type == "channel" )
+                            currentSlashCommand.addChannelOption( opt => 
+                                opt.setName(cmdd.name)
+                                    .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
+                                    .setRequired(cmdd.required)
+                                );
+                        else if( cmdd.type == "int" )
+                            currentSlashCommand.addIntegerOption( opt => 
+                                opt.setName(cmdd.name)
+                                    .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
+                                    .setRequired(cmdd.required)
+                                );
+                        else if( cmdd.type == "mention" )
+                            currentSlashCommand.addMentionableOption( opt => 
+                                opt.setName(cmdd.name)
+                                    .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
+                                    .setRequired(cmdd.required)
+                                );
+                        else if( cmdd.type == "number" )
+                            currentSlashCommand.addNumberOption( opt => 
+                                opt.setName(cmdd.name)
+                                    .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
+                                    .setRequired(cmdd.required)
+                                );
+                        else if( cmdd.type == "role" )
+                            currentSlashCommand.addRoleOption( opt => 
+                                opt.setName(cmdd.name)
+                                    .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
+                                    .setRequired(cmdd.required)
+                                );
+                    }
+                }
             });
         }
         
@@ -173,6 +273,7 @@ export async function initCommandManager()
 
 type CommandArgument = { 
     ctx: Message | CommandInteraction,
+    isSlashCommand: boolean,
     commander?: Clients | null, 
     cmd: Command, 
     link?: Discod | null,
@@ -180,6 +281,10 @@ type CommandArgument = {
     b3id?: number,
     slot?: number,
     guid?: string,
+    name?: string,
+    text?: string,
+    maptoken?: string,
+    gametype?: string,
     group?: string,
     visible2all?: boolean,
     other: any
@@ -187,6 +292,7 @@ type CommandArgument = {
 
 async function processIncomingCommand( ctx: Message | CommandInteraction )
 {
+    const totalTimeTracker = new Timer();
     Debug(`Command Interaction`);
     
     const isInteraction = ctx instanceof CommandInteraction || ctx instanceof Interaction;
@@ -273,6 +379,7 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
     {
         var argObject: CommandArgument = { 
             ctx,
+            isSlashCommand: isInteraction,
             commander, 
             cmd, 
             link: discodQ,
@@ -302,12 +409,24 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
             case "group":
                 argObject.group = argOpt.value as string;
                 break;
+            case "maptoken":
+                argObject.maptoken = (argOpt.value as string).toLowerCase();
+                break;
+            case "gametype":
+                argObject.gametype = (argOpt.value as string).toLowerCase();
+                break;
+            case "name":
+                argObject.name = argOpt.value as string;
+                break;
+            case "text": 
+                argObject.text = argOpt.value as string;
+                break;
             case "visible2all":
                 argObject.visible2all = !!argOpt.value;
                 break;
             default: 
                 argObject.other = {}
-                argObject.other["argOpt.name"] = argOpt.value;
+                argObject.other[argOpt.name] = argOpt.value;
                 break;
         }
     }
@@ -328,16 +447,17 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
         return;
     }
 
+    var visibility: boolean;
+    if( argObject.visible2all != undefined )
+        visibility = argObject.visible2all;
+    else if( cmd.visibleToAllByDefault != undefined )
+        visibility = cmd.visibleToAllByDefault;
+    else visibility = mainconfig.command.visibleToAllByDefault;
+
     if( response != undefined && response != "" )
     {
         if( isInteraction )
         {
-            var visibility: boolean;
-            if( argObject.visible2all != undefined )
-                visibility = argObject.visible2all;
-            else if( cmd.visibleToAllByDefault != undefined )
-                visibility = cmd.visibleToAllByDefault;
-            else visibility = mainconfig.command.visibleToAllByDefault;
             if( typeof response == "string" )
                 await ctx.reply({
                     content: response,
@@ -352,7 +472,6 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
                 embeds: [response],
                 ephemeral: !visibility,
             });
-            console.log(`Command: ${chalk.green(cmd.name)} by ${chalk.green(ctx.user.tag)} in ${chalk.green(ctx.channel)}, Visibility: ${visibility? "all" : "private"}`);
         }
         else
         {
@@ -361,10 +480,16 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
             else if( isArray(response) )
                 await ctx.reply({ embeds: response });
             else await ctx.reply({ embeds: [response] });
-
-            console.log(`Command: ${chalk.magenta(cmd.name)} by ${chalk.magenta(ctx.author.tag)} in ${chalk.magenta(ctx.channel)}`);
         } 
     }
+    var logStr: string = `Command: ${chalk.magenta(cmd.name)} by `;
+    if( isInteraction )
+        logStr += `${chalk.magenta(ctx.user.tag)} in ${chalk.magenta(ctx.channel)}, Visibility: ${visibility? "all" : "private"}`;
+    else logStr += `${chalk.magenta(ctx.author.tag)} in ${chalk.magenta(ctx.channel)}`;
+
+    if( isDebug() )
+        logStr += chalk.yellow(` - ${totalTimeTracker.getTime()}ms`);
+    console.log(logStr)  
 }
 
 interface ComMan 

@@ -1,0 +1,4 @@
+dm:Deathmatch
+war:Team Deathmatch
+sd:Search and destroy
+sr:Search and Rescue

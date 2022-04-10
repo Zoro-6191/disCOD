@@ -31,7 +31,7 @@
       "typeorm": "^0.3.0-rc.36"
    },
    "scripts": {
-      "prebuild": "npm i -g typescript typeorm-model-generator nodemon ts-node",
+      "prebuild": "npm i -g typescript typeorm-model-generator nodemon ts-node && cp -R ./src/conf ./build/conf",
       "start": "ts-node src/index.ts",
       "typeorm": "node --require ts-node/register ./node_modules/typeorm/cli.js",
       "watchts": "tsc -w",

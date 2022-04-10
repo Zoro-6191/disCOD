@@ -6,6 +6,7 @@ import { Clients } from "../entity/Clients";
 
 export type CommandArgument = { 
     ctx: Message | CommandInteraction,
+    isSlashCommand: boolean,
     commander?: Clients, 
     cmd: Command, 
     link?: Discod,
@@ -13,9 +14,13 @@ export type CommandArgument = {
     b3id?: number,
     slot?: number,
     guid?: string,
+    name?: string,
+    text?: string,
     group?: string,
+    maptoken?: string,
+    gametype?: string,
     visible2all?: boolean,
-    other: any
+    other?: any
 }
 
 export type CommandResponse = MessageEmbed | string | undefined | MessageEmbed[] | [MessageEmbed];

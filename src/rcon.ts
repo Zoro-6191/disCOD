@@ -30,12 +30,39 @@ type RconConnectionOptions =
 
 interface RconClient 
 {
-    ip: string;
-    port: number;
-    rconpass: string | undefined;
-    connected: boolean;
+    readonly ip: string;
+    readonly udpip: string;
+    readonly port: number;
+    readonly rconpass: string;
+    readonly connected: boolean;
+    readonly sv_hostname: string;
+    readonly sv_maxclients: number;
+    readonly fs_game: string;
+    readonly os: string;
+    readonly version: string;
+    readonly shortversion: string;
+    readonly build: number;
+    readonly revision: string;
+    readonly protocol: string;
+    readonly sv_minPing: number;
+    readonly sv_maxPing: number;
+    readonly sv_disableClientConsole: 0 | 1;
+    readonly sv_voice: 0 | 1;
+    readonly sv_maxRate: number;
+    readonly sv_floodprotect: number;
+    readonly sv_pure: 0 | 1;
+    readonly gamename: "Call of Duty 4";
     
+    /**
+     * Instantly Fast Restart current map.
+     * @returns Promise
+     */
     fast_restart(): Promise<void>;
+
+    gametype( gt: string ): Promise<void>;
+
+    getCurrentGametype(): Promise<string>;
+    getCurrentMap(): Promise<string>;
 
     /**
      * Similar to GSC
@@ -72,31 +99,22 @@ interface RconClient
      */
     getDvarFloat( dvar: string ): Promise<number>;
     
-    /**
-     * Get current Hostname
-     * @returns Promise< string >
-     */
-    getHostname(): Promise<string>;
-    
-    /**
-     * Get server's max possible clients
-     * @returns number
-     */
-    getMaxClients(): number;
-    
     getMultipleDvars( ...dvars: string[] ): Promise<object>; 
     getOnlinePlayers( options?: GetOnlinePlayersArgs ): Promise< RconOnlinePlayer[] >;
     getOnlinePlayerBySlot( slot: number ): Promise< RconOnlinePlayer | undefined>;
-    getServerOs(): string | undefined;
+    getss( slot: number ): Promise<string>;
     kick( slot: number | string, reason?: string ): Promise<string>;
+    map( maptoken: string ): Promise<void>;
+    map_restart(): Promise<void>;
     quit(): Promise<boolean>;
     say( text: string ): Promise<void>;
+    screensay( text: string ): Promise<void>;
     sendRconCommand( cmd: string ): Promise<string>;
-    serverinfo(): Promise<object>;
+    serverinfo(): Promise<RconInfo>;
     setDvar( dvar: string, value: string | number ): Promise<boolean>;
     setHostname( newname: string ): Promise<boolean>;
     status(): Promise<RconStatus>;
-    testConnection(): Promise<boolean>;
+    testConnection(): Promise<void>;
 }
 
 type GetOnlinePlayersArgs = { 
@@ -115,7 +133,7 @@ type RconStatus =
     onlinePlayers: RconOnlinePlayer[];
 }
 
-interface RconInfo {
+type RconInfo = {
     sv_maxclients: number,
     fs_game: string,
     version: string,
@@ -148,9 +166,8 @@ export async function createRconConnection( options: RconConnectionOptions): Pro
     {
         globalThis.rcon = new CreateRconConnection( options );
 
-        if( !(await rcon.testConnection()) )
-            reject();
-        else rcon.connected = true;
+        await rcon.testConnection()
+            .catch( e =>  reject(e) )
 
         resolve(rcon);
     })
@@ -160,16 +177,30 @@ export async function createRconConnection( options: RconConnectionOptions): Pro
 class CreateRconConnection implements RconClient
 {
     readonly ip: string;
+    readonly udpip: string;
     readonly port: number = 28960;
     readonly rconpass: string;
-    public connected: boolean = false;
+    readonly sv_hostname: string;
+    readonly sv_maxclients: number;
+    readonly fs_game: string;
+    readonly os: string;
+    readonly version: string;
+    readonly shortversion: string;
+    readonly build: number;
+    readonly revision: string;
+    readonly protocol: string;
+    readonly sv_minPing: number;
+    readonly sv_maxPing: number;
+    readonly sv_disableClientConsole: 0 | 1;
+    readonly sv_voice: 0 | 1;
+    readonly sv_maxRate: number;
+    readonly sv_floodprotect: number;
+    readonly sv_pure: 0 | 1;
+    readonly gamename: "Call of Duty 4";
+    readonly connected: boolean;
 
     private socket: Socket;
-    private hostname: string;
-    private maxclients: number;
-    private modname: string;
-    private os: string;
-
+    
     constructor( options: RconConnectionOptions )
     {
         this.ip = options.ip;
@@ -183,28 +214,34 @@ class CreateRconConnection implements RconClient
         return this;
     }
 
-    public async testConnection(): Promise<boolean>
+    public async testConnection(): Promise<void>
     {
-        const msg = this.encodeOutgoingMsg(`rcon ${this.rconpass} status`);
-        this.sendUDPMessage(msg);
-        try
+        return new Promise( async(resolve, reject) => 
         {
+            const msg = this.encodeOutgoingMsg(`rcon ${this.rconpass} status`);
+            this.sendUDPMessage(msg);
             const tes = await this.decodeIncomingMsg();
 
-            if( tes )
-            {
-                // update permanent dvars here
-                // like sv_hostname etc
+            if( tes == "Bad rcon" )
+                reject("Incorrect Rcon Password");
 
-                return true;
-            }
-        }
-        catch(e)
-        {
-            console.log(e);
-            return false;
-        }
-        return false;
+            // update permanent dvars here
+            // like sv_hostname etc            
+
+            const parse = await this.parseRconStatus(tes)
+                .catch( e => reject(e) );
+
+            if( parse == undefined )
+                return;
+
+            (this as any).connected = true;
+            (this as any).gamename = "Call of Duty 4";
+
+            // to update readonly props
+            this.serverinfo();
+
+            resolve();
+        })
     }
 
     private decodeIncomingMsg( maxTimeOut: number = 500 ): Promise<string>
@@ -269,9 +306,24 @@ class CreateRconConnection implements RconClient
         await this.onlySend(`fast_restart`);
     }
 
+    public async gametype(gt: string): Promise<void> 
+    {
+        await this.onlySend(`gametype ${gt}`);
+    }
+
+    public async map( maptoken: string ): Promise<void> 
+    {
+        await this.onlySend(`map ${maptoken}`);
+    }
+    
+    public async map_restart(): Promise<void> 
+    {
+        await this.onlySend(`map_restart`);
+    }
+
     public async getDvar(dvar: string): Promise<string | number | boolean> 
     {
-        const resp = await this.sendRconCommand(dvar)    ;
+        const resp = await this.sendRconCommand(dvar);
 
         // TO-DO: process "resp" and check dvar type and whether it exists
 
@@ -328,48 +380,39 @@ class CreateRconConnection implements RconClient
         return resp.toString();    
     }
 
-    public async getHostname(): Promise<string> 
-    {
-        if(!this.hostname)
-        {
-            const hname: string = await this.getDvarString("sv_hostname");
-            this.hostname = hname;
-
-            return hname;
-        }
-        return this.hostname;
-    }
-
-    public getMaxClients(): number
-    {
-        return this.maxclients;    
-    }
-
     private async parseRconStatus( status: string ): Promise<RconStatus>
     {
-        var bob: any = {};
-
-        const lines: string[] = status.split("\n");
-
-        for( var i = 0; i < 6; i++ )
+        return new Promise( async (resolve,reject) => 
         {
-            var line: string = lines[i];
-            var pair: string[] = line.split(":");            
-            var key: string = pair[0].trim().replace("/","");
-            pair.shift();
-            var value: string = pair.join(":").trim();
+            var bob: any = {};
 
-            (bob as any)[key] = value;
-        }
+            const lines: string[] = status.split("\n");
 
-        // update instace constants
-        this.os = bob.os;
+            if( !lines.length )
+                reject("INVALID_STATUS_PARSE");
 
-        const toRet: RconStatus = {
-            ...bob,
-            onlinePlayers: await this.getOnlinePlayers({status: status})
-        }
-        return toRet;
+            for( var i = 0; i < 6; i++ )
+            {
+                var line: string = lines[i];
+                var pair: string[] = line.split(":");            
+                var key: string = pair[0].trim().replace("/","");
+                pair.shift();
+                var value: string = pair.join(":").trim();
+
+                (bob as any)[key] = value;
+            }
+
+            // update instace constants
+            (this as any).os = bob.os;
+            (this as any).sv_hostname = bob.sv_hostname;
+            (this as any).udpip = bob.udpip;
+
+            const toRet: RconStatus = {
+                ...bob,
+                onlinePlayers: await this.getOnlinePlayers({status: status})
+            }
+            resolve(toRet);
+        });
     }
 
     private async onlySend( cmd: string ): Promise<void>
@@ -378,53 +421,89 @@ class CreateRconConnection implements RconClient
         await this.sendUDPMessage( encodedMsg );
     }
 
-    private pasreRconInfo( info: string ): RconInfo
+    private parseRconInfo( info: string ): RconInfo
     {
-        const infoObj: any = {};
-
         const lines = info.split("\n");
-
+        
         // remove "Server info settings:"
         lines.shift();
 
-        for( var i =  0; i < lines.length; i++ )
+        const infoObj: any = {};
+
+        line_loop:
+        for( var i = 0; i < lines.length; i++ )
         {
-            const line = lines[i];
+            var line = lines[i];
 
-            // split by multiple white spaces
-            const mat = line.split(/\s+/);
+            var lineArr = line.split(/\s{2,}/);
 
-            // remove extra ''
-            mat.shift();
+            if( lineArr[0] == "_CoD4 X Site" )
+                continue line_loop;
 
-            const key = mat[0];
-            var temp: string[] = mat;
-            temp.shift();
+            if( lineArr[0] != undefined && lineArr[1] == undefined )
+            {
+                const subline = lineArr[0];
+                const proces = subline.split(/\s/);
 
-            (infoObj as any)[key] = temp.join(" ");
+                if( proces.length == 1 )
+                    continue line_loop;
+
+                const key = proces[0];
+                
+                proces.shift();
+
+                var value: any = proces.join(" ");
+
+                if( value.containsOnlyDigits() )
+                    value = parseInt(value);
+
+                infoObj[key] = value;
+            }
+            else
+            {
+                const key = lineArr[0];
+
+                lineArr.shift();
+
+                var value: any = lineArr.join(" ");
+
+                if( value.containsOnlyDigits() )
+                    value = parseInt(value);
+
+                infoObj[key] = value;
+            }
         }
-        // toRet = {...(infoObj as any)}
 
-        const toRet: RconInfo = 
-        {
-            sv_maxclients: Number( infoObj.sv_maxclients || NaN ),
-            build: Number( infoObj.build || NaN ),
-            g_compassShowEnemies: Number( infoObj.g_compassShowEnemies || NaN ),
-            protocol: Number( infoObj.protocol || "" ),
-            sv_minPing: Number( infoObj.sv_minPing || NaN ),
-            sv_maxPing: Number( infoObj.sv_maxPing || NaN ),
-            sv_disableClientConsole: Number( infoObj.sv_disableClientConsole || NaN ),
-            sv_pure: Number( infoObj.sv_pure || NaN ),
-            sv_voice: Number( infoObj.sv_voice || NaN ),
-            sv_maxRate: Number( infoObj.sv_maxRate || NaN ),
+        // update instance stuff
+        (this as any).sv_maxclients = infoObj.sv_maxclients;
+        (this as any).fs_game = infoObj.fs_game;
+        (this as any).version = infoObj.version;
+        (this as any).shortversion = infoObj.shortversion;
+        (this as any).build = infoObj.build;
+        (this as any).branch = infoObj.branch;
+        (this as any).revision = infoObj.revision;
+        (this as any).protocol = infoObj.protocol;
+        (this as any).sv_hostname = infoObj.sv_hostname;
+        (this as any).sv_minPing = infoObj.sv_minPing;
+        (this as any).sv_maxPing = infoObj.sv_maxPing;
+        (this as any).sv_disableClientConsole = infoObj.sv_disableClientConsole;
+        (this as any).sv_voice = infoObj.sv_voice;
+        (this as any).sv_pure = infoObj.sv_pure;
+        (this as any).sv_floodprotect = infoObj.sv_floodprotect;
 
-            ...infoObj
-        }
+        return infoObj as RconInfo;
+    }
 
-        // update instance constants
-        this.modname = infoObj.fs_game;
+    public async getCurrentGametype(): Promise<string> 
+    {
+        const info = await this.serverinfo();
+        return info.g_gametype;
+    }
 
-        return toRet;
+    public async getCurrentMap(): Promise<string> 
+    {
+        const info = await this.serverinfo();
+        return info.mapname;
     }
 
     public async getMultipleDvars(...dvars: string[]): Promise<object> 
@@ -497,14 +576,20 @@ class CreateRconConnection implements RconClient
         return undefined;
     }
 
-    public getModName(): string
+    public async getss( slot: number ): Promise<string>
     {
-        return this.modname;
+        const resp = await this.sendRconCommand(`getss ${slot}`);
+        return resp;
     }
 
     public async say( text: string ): Promise<void>
     {
         await this.onlySend(`say ${text}`);
+    }
+
+    public async screensay( text: string ): Promise<void>
+    {
+        await this.onlySend(`screensay ${text}`);
     }
 
     public async sendRconCommand( cmd: string ): Promise<string>
@@ -518,9 +603,11 @@ class CreateRconConnection implements RconClient
 
     public async serverinfo(): Promise<RconInfo> 
     {
-        const cmd: string = await this.sendRconCommand("serverinfo");
-        const parsed: RconInfo = this.pasreRconInfo(cmd);
-        return parsed;
+        return new Promise( async(resolve) => {
+            const cmd: string = await this.sendRconCommand("serverinfo");
+            const parsed: RconInfo = this.parseRconInfo(cmd);
+            resolve( parsed );
+        })
     }
     
     public async setDvar(dvar: string, value: string | number ): Promise<boolean>
@@ -562,16 +649,10 @@ class CreateRconConnection implements RconClient
 
     public async quit(): Promise<boolean>
     {
-        const out = await this.sendRconCommand(`quit`);
-        console.log(out);
-        
+        await this.sendRconCommand(`quit`);
+        (this as any).connected = false;
         // TO-DO: check "out" and return based on that
 
         return true;
-    }
-
-    public getServerOs(): string | undefined
-    {
-        return this.os;
     }
 }

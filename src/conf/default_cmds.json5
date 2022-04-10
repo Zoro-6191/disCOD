@@ -76,6 +76,30 @@
             visibleToAllByDefault: true,
         },
         {
+            name: "gametype",
+            description: "Change gametype",
+            minLevel: 80,
+            alias: [],
+            type: "slash",
+            acceptArgs: {
+                gametype: true,
+                visible2all: false
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: "getss",
+            description: "Fetch GUID",
+            minLevel: 1,
+            alias: ["ss","pbss"],
+            type: "slash",
+            acceptArgs: {
+                slot: true,
+                visible2all: false
+            },
+            visibleToAllByDefault: true,
+        },
+        {
             name: "guid",
             description: "Fetch GUID",
             minLevel: 60,
@@ -128,6 +152,71 @@
             visibleToAllByDefault: true,
         },
         {
+            name: "list",
+            description: "Fetch latest active bans",
+            minLevel: 20,
+            alias: [],
+            type: "slash",
+            acceptArgs: {
+                visible2all: false
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: "lookup",
+            description: "Find a name in database",
+            minLevel: 60,
+            alias: [],
+            type: "slash",
+            acceptArgs: {
+                visible2all: false,
+                other: [
+                    {
+                        name: "name",
+                        type: "string",
+                        required: true,
+                    },
+                ]
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: "mag",
+            description: "Change map and gametype",
+            minLevel: 80,
+            alias: [],
+            type: "slash",
+            acceptArgs: {
+                maptoken: true,
+                gametype: true,
+                visible2all: false,
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: "map",
+            description: "Change map",
+            minLevel: 80,
+            alias: [],
+            type: "slash",
+            acceptArgs: {
+                maptoken: true,
+                visible2all: false,
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: "map_restart",
+            description: "Restart current Map",
+            minLevel: 80,
+            alias: [],
+            type: "slash",
+            acceptArgs: {
+                visible2all: false,
+            },
+            visibleToAllByDefault: true,
+        },
+        {
             name: "mask",
             description: "Mask a player",
             minLevel: 80,
@@ -142,6 +231,19 @@
             visibleToAllByDefault: true,
         },
         {
+            name: "masktest",
+            description: "Check if a player is masked",
+            minLevel: 80,
+            alias: [],
+            type: "slash",
+            acceptArgs: {
+                target: false,
+                b3id: false,
+                visible2all: false
+            },
+            visibleToAllByDefault: true,
+        },
+        {
             name: "putgroup",
             description: "Change player's user group",
             minLevel: 100,
@@ -152,6 +254,38 @@
                 b3id: false,
                 visible2all: false,
                 group: true,
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: "say",
+            description: "Say something in chat ingame",
+            minLevel: 40,
+            alias: [],
+            type: "slash",
+            acceptArgs: {
+                visible2all: false,
+                text: true,
+                // other: [
+                //     {
+                //         name: "text",
+                //         type: "string",
+                //         required: true
+                //     }
+                // ]
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: "seen",
+            description: "Last seen of a player",
+            minLevel: 20,
+            alias: [],
+            type: "slash",
+            acceptArgs: {
+                target: false,
+                b3id: false,
+                visible2all: false,
             },
             visibleToAllByDefault: true,
         },

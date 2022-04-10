@@ -43,13 +43,14 @@ Steps:
     ```
     sudo apt update && sudo apt upgrade
     sudo apt install curl
-    curl -sL https://deb.nodesource.com/setup_17.x | sudo -E bash -
+    curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
     sudo apt-get install git nodejs
     ```
 - Clone repository and enter the folder
     ```
     git clone https://github.com/Zoro-6191/disCOD.git
     cd disCOD
+    npm run prebuild
     ```
 - After [configuring](#configuring-discod), run disCOD using:
     ```
@@ -70,5 +71,5 @@ Steps:
     ```
 
 # Configuring disCOD
-- Go to `conf`, edit `config.json`(main config)
+- Go to `buid/conf`, edit `config.json`(main config)
 - All of the configs are explainatory, but make sure to stick to JSON syntax

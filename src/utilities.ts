@@ -15,6 +15,8 @@ declare global
          * @example "^5Zoro-^86191".removeCodColors() = "Zoro-6191"
          */
         removeCodColors(): string;
+
+        containsOnlyDigits(): boolean;
     }
 
     /**
@@ -69,7 +71,12 @@ declare global
 
 String.prototype.removeCodColors = function(): string
 {
-    return this.replace(/\^\d/, "");
+    return this.replace(/\^\d/g, "");
+}
+
+String.prototype.containsOnlyDigits = function(): boolean
+{
+    return /^\d+$/.test(this as string);
 }
 
 type CreateBasicEmbedArgType = {
@@ -206,7 +213,7 @@ export class Timer
 
     constructor()
     {
-        this.updateTimer()
+        this.updateTimer();
         return this;
     }
 

@@ -35,9 +35,14 @@ linkCmds[1]= {
     type: "both",
     visibleToAllByDefault: true,
     acceptArgs: {
-        other: {
-            confirm: true,
-        }
+        other: [
+            {
+                name: "confirm",
+                type: "boolean",
+                description: "Provide Confirmation",
+                required: true
+            },
+        ]
     },
     callback: cmd_unlink as any,
 }
