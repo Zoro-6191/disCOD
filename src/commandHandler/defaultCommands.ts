@@ -532,11 +532,9 @@ export async function cmd_seen( arg: CommandArgument ): Promise<CommandResponse>
     const embed = new MessageEmbed().setColor(themeColor);
 
     const client = await getClientFromCommandArg(arg);
-    if( client == undefined )
-        return;
+    if( client == undefined ) return;
 
     const link = await getLink(client);
-
     const lastseen = new Date(client.time_edit*1000);
     
     if( link != undefined )
@@ -792,4 +790,44 @@ export async function cmd_xlrstats( arg: CommandArgument ): Promise<CommandRespo
 Kills: ${stats.kills}\nDeaths: ${stats.deaths}\nKDR: ${stats.ratio}\nSkill: ${stats.skill}\nRounds Played: ${stats.rounds}\nMax Win Streak: ${stats.winstreak}\`\`\``
 
     return embed.setDescription("**XLR Stats for " + str);
+}
+
+export async function cmd_xlrtopstats(): Promise<CommandResponse>
+{
+    const embed = new MessageEmbed().setColor(themeColor).setTitle(`XLR Top Stats`);
+
+    const q = await rawQuery(`
+        SELECT 
+            clients.name,
+            clients.id, 
+            kills, 
+            deaths, 
+            ratio, 
+            skill,
+            discod.dc_id
+        FROM clients, xlr_playerstats, discod
+        WHERE (clients.id = xlr_playerstats.client_id)
+            AND ( (xlr_playerstats.kills > 50 ) OR (xlr_playerstats.rounds > 5) )
+            AND (xlr_playerstats.hide = 0)
+            AND (UNIX_TIMESTAMP(NOW()) - clients.time_edit  < 14*60*60*24)
+            AND discod.b3_id = clients.id AND discod.linked = 1
+            AND clients.id NOT IN
+                ( SELECT distinct(target.id) FROM penalties as penalties, clients as target
+                WHERE (penalties.type = "Ban"
+                OR penalties.type = "TempBan")
+                AND inactive = 0
+                AND penalties.client_id = target.id
+                AND ( penalties.time_expire = -1
+                OR penalties.time_expire > UNIX_TIMESTAMP(NOW()) ) )
+        ORDER BY xlr_playerstats.skill DESC LIMIT 12`);
+    
+    for( var i = 0; i < q.length; i++ )
+    {
+        var fieldContent = `<@${q[i].dc_id}>\n`;
+        fieldContent += `\`\`\`apache\nKills: ${q[i].kills}\nKDR: ${q[i].ratio}\nSkill: ${q[i].skill}\`\`\``;
+
+        embed.addField(`${i+1}. ${q[i].name}`,fieldContent,true);
+    }   
+
+    return embed;
 }

@@ -7,9 +7,9 @@ import { Clients } from "../entity/Clients";
 export type CommandArgument = { 
     ctx: Message | CommandInteraction,
     isSlashCommand: boolean,
-    commander?: Clients, 
+    commander?: Clients | null, 
     cmd: Command, 
-    link?: Discod,
+    link?: Discod | null,
     target?: User,
     b3id?: number,
     slot?: number,

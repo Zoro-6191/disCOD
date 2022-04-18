@@ -257,10 +257,10 @@ export async function initCommandManager()
         globalThis.GlobalCommands.push(createCmd);
     }    
 
-    await rest.put(
-        Routes.applicationGuildCommands(discordClient.user?.id, discordClient.guildId ),
-        { body: slashCmds },
-    );
+    // await rest.put(
+    //     Routes.applicationGuildCommands(discordClient.user?.id, discordClient.guildId ),
+    //     { body: slashCmds },
+    // );
 
     // catch and process slash commands
     if( mainconfig.command.type != "prefix" )
@@ -493,7 +493,7 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
 
 interface ComMan 
 {
-    registerCommand( options: Command ): boolean;
+    registerCommand( options: Command ): Promise<void>;
     removeCommand( name: string ): void;
     getCommand( options: { name?: string, alias?: string } ): Command | undefined;
     addCommandAlias( name: string, alias: string[] ): void;
@@ -565,7 +565,7 @@ async function checkPower( ctx: Message | CommandInteraction, cmd: Command, clie
     return true;
 }
 
-function registerCommand( options: Command ): boolean
+async function registerCommand( options: Command ): Promise<any>
 {
     // always need lowercase
     options.name = options.name.toLocaleLowerCase();
@@ -575,14 +575,158 @@ function registerCommand( options: Command ): boolean
     // can't have dups
     const exists = getCommand( { name: options.name } );
 
-    if( exists == undefined )
-        GlobalCommands.push(options);
-    else 
-    {
-        removeCommand( exists.name );
-        GlobalCommands.push(options);
-    }
-    return false;
+    if( exists )
+        throw new Error(`Command ${options.name} already exists, unregister it first`);
+
+    var currentSlashCommand: SlashCommandBuilder = new SlashCommandBuilder()
+                    .setName(options.name)
+                    .setDescription(options.description);
+
+    //  slash choices
+    var groupChoices: [name: string, value: string][] = [];
+    for( var i = 0; i < GlobalGroups.length; i++ )
+        groupChoices.push([ GlobalGroups[i].name, GlobalGroups[i].keyword ]);
+    var mapChoices: [name: string, value: string][] = [];
+    Object.keys(GlobalMaps).forEach( (key: string) => {
+        mapChoices.push([ (GlobalMaps as any)[key], key ]);
+    })
+
+    var gametypeChoices: [name: string, value: string][] = [];
+    Object.keys(GlobalGametypes).forEach( (key: string) => {
+        gametypeChoices.push([ (GlobalGametypes as any)[key], key ]);
+    })
+
+    const accInput: any = Object.fromEntries(Object.entries(options.acceptArgs).sort( ([,x],[,y]) => (x === y)? 0 : x? -1 : 1 ));
+
+    Object.keys(accInput).forEach( key => {
+        if( key == "target" )
+            currentSlashCommand.addMentionableOption( opt => 
+                    opt.setName("target")
+                        .setDescription("Mention a User")
+                        .setRequired(accInput.target)
+                    );
+        else if( key == "b3id" )
+            currentSlashCommand.addIntegerOption( opt => 
+                    opt.setName("b3id")
+                        .setDescription("B3 ID of player")
+                        .setMinValue(2)
+                        .setMaxValue(999999)
+                        .setRequired(accInput.b3id)
+                    );
+        else if( key == "slot" )
+            currentSlashCommand.addIntegerOption( opt => 
+                    opt.setName("slot")
+                        .setDescription("Slot of player if he's currently in-game")
+                        .setRequired(accInput.slot)
+                        .setMinValue(0)
+                        .setMaxValue(63)
+                    );
+        else if( key == "text" )
+            currentSlashCommand.addStringOption( opt => 
+                        opt.setName("text")
+                            .setDescription("Enter any text")
+                            .setRequired(accInput.text)
+                        );
+        else if( key == "name" )
+            currentSlashCommand.addStringOption( opt => 
+                        opt.setName("name")
+                            .setDescription("Name of online player")
+                            .setRequired(accInput.name)
+                        );
+        else if( key == "guid" )
+            currentSlashCommand.addStringOption( opt => 
+                    opt.setName("guid")
+                        .setDescription("GUID of player")
+                        .setRequired(accInput.guid)
+                    );
+        else if( key == "maptoken" )
+            currentSlashCommand.addStringOption( opt => 
+                    opt.setName("maptoken")
+                        .setDescription("Token of map, like mp_crash")
+                        .setRequired(accInput.maptoken)
+                        .setChoices(mapChoices)
+                    );
+        else if( key == "gametype" )
+            currentSlashCommand.addStringOption( opt => 
+                    opt.setName("gametype")
+                        .setDescription("Gametype Token, like dm or sd")
+                        .setRequired(accInput.gametype)
+                        .setChoices(gametypeChoices)
+                    );
+        else if( key == "visible2all" )
+            currentSlashCommand.addBooleanOption( opt =>
+                    opt.setName("visible2all")
+                        .setDescription("If false, only you will be able to see response.")
+                        .setRequired(accInput.visible2all)
+                    );
+        else if( key == "group" )
+            currentSlashCommand.addStringOption( opt => 
+                    opt.setName("group")
+                        .setDescription("User or Admin group")
+                        .setRequired(accInput.group)
+                        .addChoices(groupChoices)
+                    );
+        else if( key == "other" && options.acceptArgs.other != undefined && options.acceptArgs.other.length > 0 )
+        {
+            // again, need to register required first smh
+            const sorted = options.acceptArgs.other.sort( (a: any,b: any) => a.required == b.required? 0 : a.required? -1 : 1 );
+
+            for( var k = 0; k < sorted.length; k++ )
+            {
+                const cmdd = sorted[k];
+                if( cmdd.type == "string" )
+                    currentSlashCommand.addStringOption( opt => 
+                        opt.setName(cmdd.name)
+                            .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
+                            .setRequired(cmdd.required)
+                        );
+                else if( cmdd.type == "boolean" )
+                    currentSlashCommand.addBooleanOption( opt => 
+                        opt.setName(cmdd.name)
+                            .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
+                            .setRequired(cmdd.required)
+                        );
+                else if( cmdd.type == "channel" )
+                    currentSlashCommand.addChannelOption( opt => 
+                        opt.setName(cmdd.name)
+                            .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
+                            .setRequired(cmdd.required)
+                        );
+                else if( cmdd.type == "int" )
+                    currentSlashCommand.addIntegerOption( opt => 
+                        opt.setName(cmdd.name)
+                            .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
+                            .setRequired(cmdd.required)
+                        );
+                else if( cmdd.type == "mention" )
+                    currentSlashCommand.addMentionableOption( opt => 
+                        opt.setName(cmdd.name)
+                            .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
+                            .setRequired(cmdd.required)
+                        );
+                else if( cmdd.type == "number" )
+                    currentSlashCommand.addNumberOption( opt => 
+                        opt.setName(cmdd.name)
+                            .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
+                            .setRequired(cmdd.required)
+                        );
+                else if( cmdd.type == "role" )
+                    currentSlashCommand.addRoleOption( opt => 
+                        opt.setName(cmdd.name)
+                            .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
+                            .setRequired(cmdd.required)
+                        );
+            }
+        }
+    });
+
+    var createCmd: Command = { ...options }
+    globalThis.GlobalCommands.push(createCmd);
+
+    // await rest.put(
+    //     Routes.applicationGuildCommands(discordClient.user?.id, discordClient.guildId ),
+    //     { body: [currentSlashCommand] },
+    // );
 }
 
 function removeCommand( name: string ): void

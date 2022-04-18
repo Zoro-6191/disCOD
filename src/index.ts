@@ -42,6 +42,7 @@ import { XlrWeaponstats } from "./entity/XlrWeaponstats";
 import { XlrWeaponusage } from "./entity/XlrWeaponusage";
 import { areConfigsOkay } from "./configs";
 import { Timer } from "./utilities";
+import { init as initPlugins } from "./pluginManager";
 
 const launchTime = new Timer();
 
@@ -152,7 +153,7 @@ async function main()
         .then( () => { cmdSpinr.succeed(`Registered default commands (${GlobalCommands.length})` + chalk.yellow(` - ${stepTimer.getTime()}ms`)) });
 
     // 6. Plugins
-    
+    initPlugins();
 
     // 7. Display our thing :D
     showDisCOD();

@@ -316,6 +316,17 @@
                 visible2all: false
             },
             visibleToAllByDefault: true,
+        },
+        {
+            name: "xlrtopstats",
+            description: "XLR Stats of a player",
+            minLevel: 1,
+            alias: [ "xlrtop" ],
+            type: "slash",
+            acceptArgs: {
+                visible2all: false
+            },
+            visibleToAllByDefault: true,
         }
     ]
 }
