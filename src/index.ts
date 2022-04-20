@@ -1,7 +1,7 @@
 // Package imports
 import "reflect-metadata";
 import "json5/lib/register";
-import { createConnection } from "typeorm";
+import { createConnection, getConnection } from "typeorm";
 import figlet from "figlet";
 import gradient from "gradient-string";
 import chalk from "chalk";
@@ -126,6 +126,8 @@ async function main()
         dbSpinner.fail(chalk.red(`Failed to connect to MySQL Server`))
         ErrorHandler.fatal(err);
     }  );
+    // rawQuery method
+    globalThis.rawQuery = (q: string) => getConnection().manager.query(q);
 
     // 3: rcon connection
     // TO-DO: make it reconnectable for when server crashing?

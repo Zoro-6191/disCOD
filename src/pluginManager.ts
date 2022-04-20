@@ -1,6 +1,5 @@
-import { readdirSync } from "fs";
+import { existsSync, readdirSync, readFileSync } from "fs";
 import JSON5 from "json5";
-import { CommandResponse } from "./commandHandler/helper";
 
 declare global
 {
@@ -20,6 +19,7 @@ export async function init(): Promise<void>
 
     var allFiles = readdirSync("./build/plugins/");
 
+    i:
     for( var i = 0; i < allFiles.length; i++ )
     {
         var ext = allFiles[i].split(".");
@@ -38,11 +38,27 @@ export async function init(): Promise<void>
         if( imp.init == undefined || !(imp.init instanceof Function) )
             throw new Error("Bad entry point in plugin "+pluginName );
 
+        // conf check
+        if( imp.config_required )
+        {
+            const confPath = `./build/conf/plugin_${pluginName}.json5`;
+
+            if( !existsSync(confPath) )
+                throw new Error(`Config for plugin "${pluginName}" not found`);
+
+            const read = readFileSync( confPath, {encoding: "utf8"} );
+
+            var parsedConf;
+            try
+            {
+                parsedConf = await JSON5.parse(read)
+            }
+            catch(e){ ErrorHandler.fatal(e) }
+
+            if( !parsedConf.enabled )
+                continue i;
+        }
+
         await imp.init();
     }
-}
-
-type PluginConf = {
-    enabled: boolean,
-    commands: Command[]
 }

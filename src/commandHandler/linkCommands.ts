@@ -1,13 +1,11 @@
 import { Message, MessageEmbed, User } from "discord.js";
-import { SlashCommandBuilder } from "@discordjs/builders"
-const { Routes } = require('discord-api-types/v9');
 import { getRepository } from "typeorm";
 import fetch from "node-fetch";
 
 import { CommandArgument, CommandResponse } from "./helper";
 import { Clients } from "../entity/Clients";
 import { Discod } from "../entity/Discod";
-import { rest } from ".";
+import CommandManager from ".";
 
 const linkCmds: Command[] = [];
 
@@ -91,71 +89,14 @@ linkCmds[4] = {
 
 export async function registerLinkCommands()
 {
-    var cmds: SlashCommandBuilder[] = [];
     for( var i = 0; i < linkCmds.length; i++ )
     {
         const cmd: Command = linkCmds[i];
 
-        GlobalCommands.push(cmd);
-
-        const slashCommand = new SlashCommandBuilder()
-            .setName(cmd.name)
-            .setDescription(cmd.description)
-
-        if( cmd.name == "link" )
-            slashCommand.addIntegerOption( opt => 
-                            opt.setName("b3id")
-                                .setDescription("Type `!id` ingame to get your id.")
-                                .setAutocomplete(true)
-                                .setRequired(true)
-                                .setMinValue(2)
-                                .setMaxValue(999999)
-                            )
-        
-        if( cmd.name == "unlink" )
-            slashCommand.addBooleanOption( opt =>
-                            opt.setName("confirm")
-                                .setRequired(true)
-                                .setDescription("Confirm if you want to unlink"))
-
-        if( cmd.name == "forcelink" )
-            slashCommand.addMentionableOption( opt =>
-                            opt.setName("target")
-                                .setRequired(true)
-                                .setDescription("Mention who to forcelink.")
-                                )
-                        .addIntegerOption( opt => 
-                            opt.setName("b3id")
-                                .setDescription("Type `!id <name>` ingame to get id.")
-                                .setAutocomplete(true)
-                                .setRequired(true)
-                                .setMinValue(2)
-                                .setMaxValue(999999)
-                            )
-        
-        if( cmd.name == "forceunlink" )
-            slashCommand.addMentionableOption( opt => 
-                                opt.setName("target")
-                                    .setDescription("Mention a User")
-                                    .setRequired(false)
-                                )
-                        .addIntegerOption( opt => 
-                                opt.setName("b3id")
-                                    .setDescription("B3 ID of player")
-                                    .setRequired(false)
-                                    .setMinValue(2)
-                                    .setMaxValue(999999)
-                                )
-
-        cmds.push(slashCommand);
-        // discordClient.application?.commands.create(slashCommand as any);
+        await CommandManager.registerCommand(cmd)
+            .catch(ErrorHandler.minor);
     }
     
-    // await rest.put(
-    //     Routes.applicationGuildCommands(discordClient.user?.id, discordClient.guildId ),
-    //     { body: cmds },
-    // );
-
     // preprocess cmd_source embed
     sourceEmbed = new MessageEmbed().setColor(themeColor);
 

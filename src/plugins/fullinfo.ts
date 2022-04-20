@@ -7,7 +7,7 @@ import Ops from "../groups";
 
 import pluginConf from "../conf/plugin_fullinfo.json5";
 
-export const config_required = false;
+export const config_required = true;
 
 
 export async function init(): Promise<void>

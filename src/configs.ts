@@ -12,6 +12,14 @@ export async function areConfigsOkay(): Promise<boolean>
 {    
     // check json entries to our liking
     
+    if( !fs.existsSync( `./build/conf/config.json5` ) )
+        throw new Error(`Main config "./build/conf/config.json5" not found`);
+
+    const mainconfig = await json5.parse(fs.readFileSync(`./build/conf/config.json5`,{encoding: "utf8"}));
+
+    globalThis.themeColor = mainconfig.themeColor;
+    globalThis.cmdPrefix = mainconfig.command.prefix;
+
     // first get all json5 files:
     var files = fs.readdirSync(__dirname+"/conf/");
     var jsonfiles: string[] = [];

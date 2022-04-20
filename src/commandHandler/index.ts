@@ -1,9 +1,7 @@
 // import "json5/lib/register";
-import { ApplicationCommandDataResolvable, ColorResolvable, CommandInteraction, Interaction, Message, User } from "discord.js";
-import { getConnection, getRepository } from "typeorm";
+import { ColorResolvable, CommandInteraction, Interaction, Message, User } from "discord.js";
+import { getRepository } from "typeorm";
 import { SlashCommandBuilder } from "@discordjs/builders"
-const { REST } = require('@discordjs/rest');
-const { Routes } = require('discord-api-types/v9');
 import { isArray } from "util";
 import chalk from "chalk";
 
@@ -74,8 +72,6 @@ var CommandManager: ComMan = {
 
 export default CommandManager;
 
-export const rest = new REST({ version: '9' }).setToken(mainconfig.discord_token);
-
 /**
  * Initialize Command Manager for the first time
  */
@@ -90,18 +86,6 @@ export async function initCommandManager()
     // get previously registered commands
     const existingSlashCommands = await discordClient.application?.commands.fetch();
     existingSlashCommands?.forEach( (value: any) => fetchedSlashCommands.push(value) )
-
-    globalThis.themeColor = mainconfig.themeColor;
-
-    // rawQuery method
-    globalThis.rawQuery = (q: string) => getConnection().manager.query(q);
-
-    const mainconfOps = mainconfig.command;
-
-    globalThis.cmdPrefix = mainconfOps.prefix;
-
-    // init slash commands
-    var slashCmds: SlashCommandBuilder[] = [];
 
     // register link commands before others
     await registerLinkCommands();
@@ -693,5 +677,5 @@ function removeAllCommandAliases( name: string ): void
 }
 
 function getAllCommands(): Command[] {
-    return globalThis.GlobalCommands;
+    return GlobalCommands;
 }
