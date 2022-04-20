@@ -1,5 +1,6 @@
 import { readdirSync } from "fs";
 import JSON5 from "json5";
+import { CommandResponse } from "./commandHandler/helper";
 
 declare global
 {
@@ -39,4 +40,9 @@ export async function init(): Promise<void>
 
         await imp.init();
     }
+}
+
+type PluginConf = {
+    enabled: boolean,
+    commands: Command[]
 }

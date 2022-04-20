@@ -5,6 +5,7 @@ import { CommandArgument, CommandResponse, getClientFromCommandArg } from "../co
 import CommandManager from "../commandHandler";
 import Ops from "../groups";
 
+import pluginConf from "../conf/plugin_fullinfo.json5";
 
 export const config_required = false;
 
@@ -12,21 +13,9 @@ export const config_required = false;
 export async function init(): Promise<void>
 {
     await CommandManager.registerCommand({
-        name: "fullinfo",
-        description: "Display full info of player",
-        type: "slash",
-        visibleToAllByDefault: false,
-        acceptArgs: {
-            target: false,
-            b3id: false,
-            guid: false,
-            slot: false,
-            visible2all: false
-        },
-        minLevel: 100,
-        alias: ["fi"],
+        ...pluginConf.commands[0],
         callback: cmd_fullinfo,
-    })
+    }).catch(ErrorHandler.minor);
 }
 
 export async function cmd_fullinfo( args: CommandArgument ): Promise<CommandResponse>
@@ -71,7 +60,7 @@ WHERE clients.id=${client.id}`);
         embed.addField(`Masked as`, maskName == undefined? "IDK" : maskName, true);
     }
 
-    const lastSeen = new Date(q[0].time_edit);
+    const lastSeen = new Date(q[0].time_edit * 1000);
 
     embed.addField('First Joined',`${new Date(q[0].time_add * 1000).toLocaleDateString()}`,true)
     embed.addField('Last Seen',`${lastSeen.toLocaleDateString()} ${lastSeen.toLocaleTimeString()}`,true)

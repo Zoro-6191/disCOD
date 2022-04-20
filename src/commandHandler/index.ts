@@ -1,5 +1,5 @@
 // import "json5/lib/register";
-import { ColorResolvable, CommandInteraction, Interaction, Message, User } from "discord.js";
+import { ApplicationCommandDataResolvable, ColorResolvable, CommandInteraction, Interaction, Message, User } from "discord.js";
 import { getConnection, getRepository } from "typeorm";
 import { SlashCommandBuilder } from "@discordjs/builders"
 const { REST } = require('@discordjs/rest');
@@ -15,6 +15,11 @@ import { registerLinkCommands } from "./linkCommands";
 import { Discod } from "../entity/Discod";
 import { CommandResponse } from "./helper";
 import { Timer } from "../utilities";
+
+var fetchedSlashCommands: any[] = [];
+var groupChoices: [name: string, value: string][] = [];;
+var gametypeChoices: [name: string, value: string][] = [];;
+var mapChoices: [name: string, value: string][] = [];
 
 declare global 
 {
@@ -81,6 +86,11 @@ export async function initCommandManager()
         return ErrorHandler.fatal("CommandHandler is already initialized once.");
 
     globalThis.GlobalCommands = [];
+
+    // get previously registered commands
+    const existingSlashCommands = await discordClient.application?.commands.fetch();
+    existingSlashCommands?.forEach( (value: any) => fetchedSlashCommands.push(value) )
+
     globalThis.themeColor = mainconfig.themeColor;
 
     // rawQuery method
@@ -97,170 +107,26 @@ export async function initCommandManager()
     await registerLinkCommands();
 
     //  slash choices
-    var groupChoices: [name: string, value: string][] = [];
     for( var i = 0; i < GlobalGroups.length; i++ )
         groupChoices.push([ GlobalGroups[i].name, GlobalGroups[i].keyword ]);
     
-    var mapChoices: [name: string, value: string][] = [];
     Object.keys(GlobalMaps).forEach( (key: string) => {
         mapChoices.push([ (GlobalMaps as any)[key], key ]);
-    })
+    });
 
-    var gametypeChoices: [name: string, value: string][] = [];
     Object.keys(GlobalGametypes).forEach( (key: string) => {
         gametypeChoices.push([ (GlobalGametypes as any)[key], key ]);
-    })
+    });
 
     // register default commands from default_cmds.json5
     for( var i = 0; i < defaultCmdsConfig.defaultCmds.length; i++ )
     {
         var cmd = defaultCmdsConfig.defaultCmds[i];
-
         cmd.callback = (await import("./defaultCommands") as any)["cmd_"+cmd.name];
+        await registerCommand( cmd )
+            .catch(ErrorHandler.minor);
+    }
 
-        if( cmd.type != "prefix" )
-        {
-            (slashCmds[slashCmds.length] as any) = new SlashCommandBuilder()
-                .setName(cmd.name)
-                .setDescription(cmd.description)
-
-            const currentSlashCommand = slashCmds[slashCmds.length-1];
-
-            // process acceptable command arguments
-            // discord wants required options first, then optional options, so we need to sort
-            const accInput: any = Object.fromEntries(Object.entries(cmd.acceptArgs).sort( ([,x],[,y]) => (x === y)? 0 : x? -1 : 1 ));
-
-            Object.keys(accInput).forEach( key => {
-                if( key == "target" )
-                    currentSlashCommand.addMentionableOption( opt => 
-                            opt.setName("target")
-                                .setDescription("Mention a User")
-                                .setRequired(accInput.target)
-                            );
-                else if( key == "b3id" )
-                    currentSlashCommand.addIntegerOption( opt => 
-                            opt.setName("b3id")
-                                .setDescription("B3 ID of player")
-                                .setMinValue(2)
-                                .setMaxValue(999999)
-                                .setRequired(accInput.b3id)
-                            );
-                else if( key == "slot" )
-                    currentSlashCommand.addIntegerOption( opt => 
-                            opt.setName("slot")
-                                .setDescription("Slot of player if he's currently in-game")
-                                .setRequired(accInput.slot)
-                                .setMinValue(0)
-                                .setMaxValue(63)
-                            );
-                else if( key == "text" )
-                    currentSlashCommand.addStringOption( opt => 
-                                opt.setName("text")
-                                    .setDescription("Enter any text")
-                                    .setRequired(accInput.text)
-                                );
-                else if( key == "name" )
-                    currentSlashCommand.addStringOption( opt => 
-                                opt.setName("name")
-                                    .setDescription("Name of online player")
-                                    .setRequired(accInput.name)
-                                );
-                else if( key == "guid" )
-                    currentSlashCommand.addStringOption( opt => 
-                            opt.setName("guid")
-                                .setDescription("GUID of player")
-                                .setRequired(accInput.guid)
-                            );
-                else if( key == "maptoken" )
-                    currentSlashCommand.addStringOption( opt => 
-                            opt.setName("maptoken")
-                                .setDescription("Token of map, like mp_crash")
-                                .setRequired(accInput.maptoken)
-                                .setChoices(mapChoices)
-                            );
-                else if( key == "gametype" )
-                    currentSlashCommand.addStringOption( opt => 
-                            opt.setName("gametype")
-                                .setDescription("Gametype Token, like dm or sd")
-                                .setRequired(accInput.gametype)
-                                .setChoices(gametypeChoices)
-                            );
-                else if( key == "visible2all" )
-                    currentSlashCommand.addBooleanOption( opt =>
-                            opt.setName("visible2all")
-                                .setDescription("If false, only you will be able to see response.")
-                                .setRequired(accInput.visible2all)
-                            );
-                else if( key == "group" )
-                    currentSlashCommand.addStringOption( opt => 
-                            opt.setName("group")
-                                .setDescription("User or Admin group")
-                                .setRequired(accInput.group)
-                                .addChoices(groupChoices)
-                            );
-                else if( key == "other" && cmd.acceptArgs.other != undefined && cmd.acceptArgs.other.length > 0 )
-                {
-                    // again, need to register required first smh
-                    const sorted = cmd.acceptArgs.other.sort( (a: any,b: any) => a.required == b.required? 0 : a.required? -1 : 1 );
-
-                    for( var k = 0; k < sorted.length; k++ )
-                    {
-                        const cmdd = sorted[k];
-                        if( cmdd.type == "string" )
-                            currentSlashCommand.addStringOption( opt => 
-                                opt.setName(cmdd.name)
-                                    .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
-                                    .setRequired(cmdd.required)
-                                );
-                        else if( cmdd.type == "boolean" )
-                            currentSlashCommand.addBooleanOption( opt => 
-                                opt.setName(cmdd.name)
-                                    .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
-                                    .setRequired(cmdd.required)
-                                );
-                        else if( cmdd.type == "channel" )
-                            currentSlashCommand.addChannelOption( opt => 
-                                opt.setName(cmdd.name)
-                                    .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
-                                    .setRequired(cmdd.required)
-                                );
-                        else if( cmdd.type == "int" )
-                            currentSlashCommand.addIntegerOption( opt => 
-                                opt.setName(cmdd.name)
-                                    .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
-                                    .setRequired(cmdd.required)
-                                );
-                        else if( cmdd.type == "mention" )
-                            currentSlashCommand.addMentionableOption( opt => 
-                                opt.setName(cmdd.name)
-                                    .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
-                                    .setRequired(cmdd.required)
-                                );
-                        else if( cmdd.type == "number" )
-                            currentSlashCommand.addNumberOption( opt => 
-                                opt.setName(cmdd.name)
-                                    .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
-                                    .setRequired(cmdd.required)
-                                );
-                        else if( cmdd.type == "role" )
-                            currentSlashCommand.addRoleOption( opt => 
-                                opt.setName(cmdd.name)
-                                    .setDescription( cmdd.description != undefined? cmdd.description : "Extra Arg" )
-                                    .setRequired(cmdd.required)
-                                );
-                    }
-                }
-            });
-        }
-        
-        var createCmd: Command = { ...cmd }
-        globalThis.GlobalCommands.push(createCmd);
-    }    
-
-    // await rest.put(
-    //     Routes.applicationGuildCommands(discordClient.user?.id, discordClient.guildId ),
-    //     { body: slashCmds },
-    // );
 
     // catch and process slash commands
     if( mainconfig.command.type != "prefix" )
@@ -453,34 +319,37 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
         visibility = cmd.visibleToAllByDefault;
     else visibility = mainconfig.command.visibleToAllByDefault;
 
-    if( response != undefined && response != "" )
-    {
-        if( isInteraction )
+    try
+    {    if( response != undefined && response != "" )
         {
-            if( typeof response == "string" )
-                await ctx.reply({
-                    content: response,
+            if( isInteraction )
+            {
+                if( typeof response == "string" )
+                    await ctx.reply({
+                        content: response,
+                        ephemeral: !visibility,
+                    });
+                else if( isArray(response) )
+                    await ctx.reply({
+                        embeds: response,
+                        ephemeral: !visibility,
+                    });
+                else await ctx.reply({
+                    embeds: [response],
                     ephemeral: !visibility,
                 });
-            else if( isArray(response) )
-                await ctx.reply({
-                    embeds: response,
-                    ephemeral: !visibility,
-                });
-            else await ctx.reply({
-                embeds: [response],
-                ephemeral: !visibility,
-            });
+            }
+            else
+            {
+                if( typeof response == "string" )
+                    await ctx.reply(response);
+                else if( isArray(response) )
+                    await ctx.reply({ embeds: response });
+                else await ctx.reply({ embeds: [response] });
+            } 
         }
-        else
-        {
-            if( typeof response == "string" )
-                await ctx.reply(response);
-            else if( isArray(response) )
-                await ctx.reply({ embeds: response });
-            else await ctx.reply({ embeds: [response] });
-        } 
     }
+    catch(e) { ErrorHandler.minor(e) }
     var logStr: string = `Command: ${chalk.magenta(cmd.name)} by `;
     if( isInteraction )
         logStr += `${chalk.magenta(ctx.user.tag)} in ${chalk.magenta(ctx.channel)}, Visibility: ${visibility? "all" : "private"}`;
@@ -574,6 +443,7 @@ async function registerCommand( options: Command ): Promise<any>
     
     // can't have dups
     const exists = getCommand( { name: options.name } );
+    const alreadyRegisteredSlashCommand = fetchedSlashCommands.find( (cmd: any) => cmd.name == options.name );
 
     if( exists )
         throw new Error(`Command ${options.name} already exists, unregister it first`);
@@ -581,20 +451,6 @@ async function registerCommand( options: Command ): Promise<any>
     var currentSlashCommand: SlashCommandBuilder = new SlashCommandBuilder()
                     .setName(options.name)
                     .setDescription(options.description);
-
-    //  slash choices
-    var groupChoices: [name: string, value: string][] = [];
-    for( var i = 0; i < GlobalGroups.length; i++ )
-        groupChoices.push([ GlobalGroups[i].name, GlobalGroups[i].keyword ]);
-    var mapChoices: [name: string, value: string][] = [];
-    Object.keys(GlobalMaps).forEach( (key: string) => {
-        mapChoices.push([ (GlobalMaps as any)[key], key ]);
-    })
-
-    var gametypeChoices: [name: string, value: string][] = [];
-    Object.keys(GlobalGametypes).forEach( (key: string) => {
-        gametypeChoices.push([ (GlobalGametypes as any)[key], key ]);
-    })
 
     const accInput: any = Object.fromEntries(Object.entries(options.acceptArgs).sort( ([,x],[,y]) => (x === y)? 0 : x? -1 : 1 ));
 
@@ -723,10 +579,10 @@ async function registerCommand( options: Command ): Promise<any>
     var createCmd: Command = { ...options }
     globalThis.GlobalCommands.push(createCmd);
 
-    // await rest.put(
-    //     Routes.applicationGuildCommands(discordClient.user?.id, discordClient.guildId ),
-    //     { body: [currentSlashCommand] },
-    // );
+    if( alreadyRegisteredSlashCommand == undefined )
+        await discordClient.application?.commands.create( { 
+            ...currentSlashCommand as any
+        } );
 }
 
 function removeCommand( name: string ): void

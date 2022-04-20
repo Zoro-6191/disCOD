@@ -1,0 +1,21 @@
+{
+    enabled: true,
+
+    commands: [
+        {
+            name: 'fullinfo',
+            alias: [ 'fi' ],
+            minLevel: 100,
+            type: 'slash',
+            description: "Display full info of player",
+            acceptArgs: {
+                target: false,
+                b3id: false,
+                guid: false,
+                slot: false,
+                visible2all: false
+            },
+            visibleToAllByDefault: false,
+        }
+    ]
+}
