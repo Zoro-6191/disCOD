@@ -234,3 +234,42 @@ export class Timer
         return new Date() as any;
     }
 }
+
+export function getDurationMS( dur: string ): number | undefined
+{
+    // separate number and text part
+    // tosmall text?
+    // process num part
+    var numPart = extractNumFromStr( dur );
+    if( numPart == undefined || numPart == 0 )
+        return undefined;
+
+    var ms: number = 0;
+
+    switch( dur )
+    {
+        case "s":
+            ms = numPart * 1000;
+            break;
+        case "m":
+            ms = numPart * 1000 * 60;
+            break;
+        case "h":
+            ms = numPart * 1000 * 60 * 60;
+            break;
+        case "d":
+            ms = numPart * 1000 * 60 * 60 * 24;
+            break;
+        default:
+            return undefined;
+    }
+    return ms;
+}
+
+export function extractNumFromStr( str: string ): number | undefined
+{
+    const matches = str.match(/\d+/g);
+    if( matches == null )
+        return undefined;
+    return parseInt(matches[0]);
+}

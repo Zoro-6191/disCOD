@@ -36,6 +36,7 @@ declare global
             group?: boolean,
             maptoken?: boolean,
             gametype?: boolean,
+            reason?: string,
             visible2all?: boolean,
             other?: OtherCommandArg[]
         },
@@ -136,6 +137,7 @@ type CommandArgument = {
     maptoken?: string,
     gametype?: string,
     group?: string,
+    reason?: string,
     visible2all?: boolean,
     other: any
 }
@@ -269,6 +271,9 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
                 break;
             case "text": 
                 argObject.text = argOpt.value as string;
+                break;
+            case "reason": 
+                argObject.reason = argOpt.value as string;
                 break;
             case "visible2all":
                 argObject.visible2all = !!argOpt.value;
@@ -424,7 +429,7 @@ async function registerCommand( options: Command ): Promise<any>
     options.name = options.name.toLocaleLowerCase();
     for( var i = 0; i < options.alias.length; i++ )
         options.alias[i] = options.alias[i].toLocaleLowerCase();
-    
+
     // can't have dups
     const exists = getCommand( { name: options.name } );
     const alreadyRegisteredSlashCommand = fetchedSlashCommands.find( (cmd: any) => cmd.name == options.name );
@@ -436,7 +441,7 @@ async function registerCommand( options: Command ): Promise<any>
                     .setName(options.name)
                     .setDescription(options.description);
 
-    const accInput: any = Object.fromEntries(Object.entries(options.acceptArgs).sort( ([,x],[,y]) => (x === y)? 0 : x? -1 : 1 ));
+    const accInput: any = Object.fromEntries(Object.entries(options.acceptArgs).sort( ([,x],[,y]) => (x === y)? 0 : x? -1 : 1 ));    
 
     Object.keys(accInput).forEach( key => {
         if( key == "target" )
@@ -506,6 +511,12 @@ async function registerCommand( options: Command ): Promise<any>
                         .setRequired(accInput.group)
                         .addChoices(groupChoices)
                     );
+        else if( key == "reason" )
+            currentSlashCommand.addStringOption( opt => 
+                    opt.setName("reason")
+                        .setDescription("Reason for your action")
+                        .setRequired(accInput.reason)
+                    );
         else if( key == "other" && options.acceptArgs.other != undefined && options.acceptArgs.other.length > 0 )
         {
             // again, need to register required first smh
@@ -559,7 +570,7 @@ async function registerCommand( options: Command ): Promise<any>
             }
         }
     });
-
+    
     var createCmd: Command = { ...options }
     globalThis.GlobalCommands.push(createCmd);
 

@@ -1,10 +1,9 @@
 import { CommandInteraction, Message, MessageEmbed } from "discord.js";
-import { Brackets, getConnection, getRepository } from "typeorm";
+import { getRepository } from "typeorm";
 
 import { Ops } from "../groups";
 import { Clients } from "../entity/Clients";
 import { getClientFromCommandArg, CommandArgument, CommandResponse } from "./helper";
-import { Penalties } from "../entity/Penalties";
 import { Discod } from "../entity/Discod";
 import mainConfig from "../conf/config.json5";
 import { XlrPlayerstats } from "../entity/XlrPlayerstats";
@@ -13,11 +12,9 @@ export async function cmd_aliases( arg: CommandArgument ): Promise< CommandRespo
 {
     const embed = new MessageEmbed().setColor(themeColor);
 
-    const client = await getClientFromCommandArg( arg )
-        .catch( () => {});
-
+    const client = await getClientFromCommandArg( arg );
     if( client == undefined )
-        return;
+        return embed.setDescription("Specify a player");
 
     embed.setTitle(`${client.name} @${client.id}`);
     
@@ -31,32 +28,100 @@ export async function cmd_aliases( arg: CommandArgument ): Promise< CommandRespo
     return embed;
 }
 
+export async function cmd_ban( arg: CommandArgument ): Promise< CommandResponse >
+{
+    const embed = new MessageEmbed().setColor(themeColor);
+
+    const client = await getClientFromCommandArg( arg );
+    if( client == undefined )
+        return embed.setDescription("❌ Specify a player");
+
+    if( arg.reason == undefined )
+        return embed.setDescription(`❌ You need to provide a reason`)
+
+    await rawQuery(`INSERT INTO penalties 
+    (type,duration,inactive,admin_id,time_add,time_edit,time_expire,reason,keyword,client_id) 
+    VALUES
+    ("Ban",30,0,${arg.commander?.id},UNIX_TIMESTAMP(),UNIX_TIMESTAMP(),time_add+30,"${arg.reason}","",${client.id});`);
+
+    rawQuery(`UPDATE clients SET group_bits=2 WHERE id=${client.id}`);
+
+    embed.addField("Reason",arg.reason,true);
+
+    const link = await getLink(client);
+
+    if( link == undefined )
+        embed.setDescription(`${client.name} \`@${client.id}\` successfully banned for 30seconds`);
+    else embed.setDescription(`<@${link.dc_id}> **${client.name.replace("*","\*")}** \`@${client.id}\` successfully banned for 30seconds`);
+
+    return embed;
+}
+
+export async function cmd_permban( arg: CommandArgument ): Promise< CommandResponse >
+{
+    const embed = new MessageEmbed().setColor(themeColor);
+
+    const client = await getClientFromCommandArg( arg );
+    if( client == undefined )
+        return embed.setDescription("❌ Specify a player");
+    
+    if( arg.reason == undefined )
+        return embed.setDescription(`❌ You need to provide a reason`)
+
+    rawQuery(`INSERT INTO penalties 
+    (type,duration,inactive,admin_id,time_add,time_edit,time_expire,reason,keyword,client_id) 
+    VALUES
+    ("Ban",0,0,${arg.commander?.id},UNIX_TIMESTAMP(),UNIX_TIMESTAMP(),-1,"${arg.reason}","",${client.id});`);
+
+    rawQuery(`UPDATE clients SET group_bits=2 WHERE id=${client.id}`);
+
+    embed.addField("Reason",arg.reason,true);
+
+    const link = await getLink(client);
+
+    if( link == undefined )
+        embed.setDescription(`${client.name} \`@${client.id}\` successfully banned for 30seconds`);
+    else embed.setDescription(`<@${link.dc_id}> **${client.name.replace("*","\*")}** \`@${client.id}\` successfully banned for 30seconds`);
+
+
+    return embed;
+}
+
+export async function cmd_unban( arg: CommandArgument ): Promise< CommandResponse >
+{
+    const embed = new MessageEmbed().setColor(themeColor);
+    
+    const client = await getClientFromCommandArg( arg );
+    if( client == undefined )
+        return embed.setDescription("S❌ pecify a player");
+    
+    rcon.sendRconCommand(`unban ${client.guid}`);
+
+    const link = await getLink(client);
+
+    const check = await rawQuery(`SELECT * FROM penalties WHERE client_id=${client.id} AND inactive=0`);
+
+    if( !check.length )
+    {
+        if( link == undefined )
+            return embed.setDescription(`${client.name} \`@${client.id}\` isn't banned. If this player was banned from rcon, they have been unbanned.`);
+        else return embed.setDescription(`<@${link.dc_id}> **${client.name.replace("*","\*")}** \`@${client.id}\` isn't banned. If this player was banned from rcon, they have been unbanned.`);
+    }
+
+    await rawQuery(`UPDATE penalties SET inactive=1,time_edit=UNIX_TIMESTAMP() WHERE client_id=${client.id} AND inactive=0`)
+
+    if( link == undefined )
+        return embed.setDescription(`${client.name} \`@${client.id}\` successfully unbanned`);
+    else return embed.setDescription(`<@${link.dc_id}> **${client.name.replace("*","\*")}** \`@${client.id}\` successfully unbanned`);
+}
+
 export async function cmd_baninfo( arg: CommandArgument ): Promise< CommandResponse >
 {
     const embed = new MessageEmbed().setColor(themeColor);
 
-    const client = await getClientFromCommandArg( arg )
-        .catch( () => {} );
-
+    const client = await getClientFromCommandArg( arg );
     if( client == undefined )
-        return;
-
-    const sql = getConnection().createQueryBuilder()
-                            .from(Clients, "c")
-                            .addFrom(Penalties, "p")
-                            // .select("")
-                            .where("c.id = :clID", { clID: client.id })
-                            .andWhere( "p.client_id = :clIDD", { clIDD: client.id } )
-                            .andWhere( "p.type IN (:...types)", { types: ["Ban", "TempBan"] })
-                            .andWhere( new Brackets(qb => {
-                                qb.where("p.time_expire = -1")
-                                .orWhere("p.time_expire > UNIX_TIMETAMP()")
-                            }))
-                            .orderBy( "p.time_add", "DESC")
-                            .limit(1)
-                            .getSql();
-
-    console.log(sql);
+        return embed.setDescription("❌ Specify a player");
 
     const query = await rawQuery(`
             SELECT * FROM clients,penalties 
@@ -69,9 +134,14 @@ export async function cmd_baninfo( arg: CommandArgument ): Promise< CommandRespo
             ORDER BY penalties.time_add DESC LIMIT 1
             `);
 
+    const link = await getLink(client);
+
     if( !query.length )
+    {
         return embed.setDescription(`**${client.name}** has no active bans`);
 
+    }
+    
     embed.setTitle(`${query[0].type}`)
         .setDescription(`**__${query[0].name}__** @${query[0].client_id}`)
         .addField( `Admin` , `**${arg.commander?.name}** @${query[0].admin_id}` , true )
@@ -88,11 +158,9 @@ export async function cmd_id( arg: CommandArgument ): Promise< CommandResponse >
 {
     const embed = new MessageEmbed().setColor(themeColor);
 
-    const client = await getClientFromCommandArg( arg )
-        .catch( () => {} );
-        
+    const client = await getClientFromCommandArg( arg );        
     if( client == undefined )
-        return;
+        return embed.setDescription("❌ Specify a player");
     
     const link = await getLink(client);
 
@@ -107,11 +175,10 @@ export async function cmd_guid( arg: CommandArgument ): Promise< CommandResponse
 {
     const embed = new MessageEmbed().setColor(themeColor);
 
-    const client = await getClientFromCommandArg( arg )
-        .catch( () => {} );
+    const client = await getClientFromCommandArg( arg );
 
     if( client == undefined )
-        return;
+        return embed.setDescription("❌ Specify a player");
     
     const link = await getLink(client);
 
@@ -166,7 +233,6 @@ export async function cmd_lbans(): Promise< CommandResponse >
             const readableExpireDate: string = getReadableDateFromTimestamp(ban.time_expire);
             fieldContent += `Expires on: ${readableExpireDate}\n`;
         }
-
         embed.addField( `${isPermanent? "Permanent Ban": "Ban"}`, fieldContent, true )
     }
 
@@ -182,7 +248,7 @@ export async function cmd_putgroup( arg: CommandArgument ): Promise< CommandResp
 
     const client = await getClientFromCommandArg( arg );
     if( client == undefined )
-        return;
+        return embed.setDescription("❌ Specify a player");
 
     const link = await getLink(client);
     const group: GlobalGroup | undefined = Ops.getGroupFromKeyword(arg.group);
@@ -213,9 +279,6 @@ export async function cmd_mask( arg: CommandArgument ): Promise< CommandResponse
     if( arg.group == undefined )
         return embed.setDescription(`❌ Invalid Command Usage`);
 
-    if( arg.commander == undefined )
-        throw new Error("COMMANDER_UNDEFINED");
-        
     var client: Clients | undefined | null;
     var link: Discod | null;
 
@@ -233,7 +296,7 @@ export async function cmd_mask( arg: CommandArgument ): Promise< CommandResponse
     }
 
     if( client == undefined )
-            return;
+        return;
 
     const group: GlobalGroup | undefined = Ops.getGroupFromKeyword(arg.group);
     

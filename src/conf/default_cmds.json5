@@ -51,6 +51,22 @@
             visibleToAllByDefault: true,
         },
         {
+            name: "ban",
+            description: "Ban a player",
+            minLevel: 60,
+            alias: ['b'],
+            type: "slash",
+            acceptArgs: {
+                target: false,
+                b3id: false,
+                guid: false,
+                slot: false,
+                reason: true,
+                visible2all: false
+            },
+            visibleToAllByDefault: true,
+        },
+        {
             name: "baninfo",
             description: "Check Ban status of a player",
             minLevel: 40,
@@ -89,7 +105,7 @@
         },
         {
             name: "getss",
-            description: "Fetch GUID",
+            description: "Take a screenshot of a player",
             minLevel: 1,
             alias: ["ss","pbss"],
             type: "slash",
@@ -140,7 +156,7 @@
         },
         {
             name: "leveltest",
-            description: "Fetch latest active bans",
+            description: "Check admin level of a player",
             minLevel: 40,
             alias: ["lt"],
             type: "slash",
@@ -153,7 +169,7 @@
         },
         {
             name: "list",
-            description: "Fetch latest active bans",
+            description: "Who's playing rn?",
             minLevel: 20,
             alias: [],
             type: "slash",
@@ -164,7 +180,7 @@
         },
         {
             name: "lookup",
-            description: "Find a name in database",
+            description: "Lookup a name in database",
             minLevel: 60,
             alias: [],
             type: "slash",
@@ -265,14 +281,7 @@
             type: "slash",
             acceptArgs: {
                 visible2all: false,
-                text: true,
-                // other: [
-                //     {
-                //         name: "text",
-                //         type: "string",
-                //         required: true
-                //     }
-                // ]
+                text: true
             },
             visibleToAllByDefault: true,
         },
@@ -285,6 +294,21 @@
             acceptArgs: {
                 target: false,
                 b3id: false,
+                visible2all: false,
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: "unban",
+            description: "Unban a player",
+            minLevel: 80,
+            alias: [],
+            type: "slash",
+            acceptArgs: {
+                target: false,
+                b3id: false,
+                guid: false,
+                slot: false,
                 visible2all: false,
             },
             visibleToAllByDefault: true,
@@ -319,7 +343,7 @@
         },
         {
             name: "xlrtopstats",
-            description: "XLR Stats of a player",
+            description: "Top player list",
             minLevel: 1,
             alias: [ "xlrtop" ],
             type: "slash",

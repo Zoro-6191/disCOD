@@ -32,7 +32,7 @@
       "typeorm": "^0.3.0-rc.36"
    },
    "scripts": {
-      "prebuild": "mkdir build && cp -R ./src/conf/*.json5 ./build/conf",
+      "prebuild": "mkdir build && mkdir build/conf && cp -R ./src/conf/*.{json5,json,txt,ini,xml} ./build/conf",
       "build": "tsc",
       "start": "ts-node src/index.ts",
       "typeorm": "node --require ts-node/register ./node_modules/typeorm/cli.js",

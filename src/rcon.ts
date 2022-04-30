@@ -388,8 +388,8 @@ class CreateRconConnection implements RconClient
 
             const lines: string[] = status.split("\n");
 
-            if( !lines.length )
-                reject("INVALID_STATUS_PARSE");
+            if( !lines.length || lines.length < 6 )
+                reject("Invalid Status Parse. Server is likely offline or unreachable");
 
             for( var i = 0; i < 6; i++ )
             {

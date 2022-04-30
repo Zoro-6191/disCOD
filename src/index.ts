@@ -170,12 +170,13 @@ function showDisCOD()
 {
     if( isDebug() )
         return;
-
-    figlet("disCOD", {font: "Slant"}, ( _e, data) => 
+    const text = "disCOD";
+    figlet(text, {font: "Slant"}, async( _e, data) => 
     {
         var gradDef: string[] = ["red", "yellow", "cyan", "pink"];
         console.log("\n\n");
         const grad = gradient(gradDef)(data);
+        await discordClient.user?.setUsername(text);
         console.log(grad);
         console.log("\n\n");
     })

@@ -19,6 +19,7 @@ export type CommandArgument = {
     group?: string,
     maptoken?: string,
     gametype?: string,
+    reason?: string,
     visible2all?: boolean,
     other?: any
 }

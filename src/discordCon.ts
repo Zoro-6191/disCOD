@@ -44,12 +44,13 @@ export async function initDiscordClient( tok: string ): Promise<DiscordClient>
         catch( e ) { reject(e) }
         discordClient.login( tok );
 
-        discordClient.on( "ready", () => 
+        discordClient.on( "ready", async () => 
         {
             const guildID = discordClient.guilds.cache.map( guild => guild.id);
             const guildName = discordClient.guilds.cache.map(guid => guid.name);
             discordClient.guildId = guildID[0];
             discordClient.guildName = guildName[0];
+            await discordClient.user?.setAvatar("https://cdn.discordapp.com/attachments/719492117294088252/832286558488100884/cod4logo.png");
             resolve(discordClient);
         });
         discordClient.once( "error", err => reject(err) );
