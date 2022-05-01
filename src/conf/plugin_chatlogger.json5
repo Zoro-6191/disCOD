@@ -1,0 +1,8 @@
+{
+    enabled: true,
+    channel_id: "9419200000000000000",
+    serverlog: "/home/cod4server/Mods/your_mod/promod_mp.log",
+    playerstatsLink: "",
+    embed_color_public: "#eb0206",
+    embed_color_team: "#87ceeb"
+}
