@@ -1,0 +1,16 @@
+// plugin requires bot to run on same system as cod server, and permission to read the log file
+{
+    enabled: true,
+    
+    // channel id for the recieving channel
+    channel_id: "9419200000000000000",
+    
+    // path to chat log
+    serverlog: "/home/cod4server/mods/your_mod/promod_mp.log",
+
+    playerstatsLink: "",
+    
+    // embed colors
+    embed_color_public: "#eb0206",
+    embed_color_team: "#87ceeb"
+}
