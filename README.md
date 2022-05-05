@@ -31,6 +31,7 @@ See it in action at [[v.F] Discord Server](https://discord.gg/vgK6G4eG3N)
 
 Steps:
 - [Creating a bot client in Discord Dev Portal](https://discordpy.readthedocs.io/en/stable/discord.html)
+    - Be sure to give it `application.commands` permission before inviting to the discord server
     - Be sure to give it Administrator Permission (Under `Bot Permissions`)
 - Installing disCOD locally
     - [Linux](#linux)
@@ -77,4 +78,4 @@ Steps:
 
 # Configuring disCOD
 - Go to `build/conf`, edit `config.json`(main config)
-- All of the configs are explainatory, but be sure to stick to [JSON5](https://json5.org/) syntax
+- All of the configs are explainatory, but be sure to stick to JSON or [JSON5](https://json5.org/) syntax

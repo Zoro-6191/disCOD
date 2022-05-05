@@ -16,7 +16,7 @@ export function getDiscordClient(): DiscordClient {
 
 export async function initDiscordClient( tok: string ): Promise<DiscordClient> 
 {
-    return new Promise( (resolve, reject) => {
+    return new Promise( async(resolve, reject) => {
 
         if( globalThis.discordClient != undefined )
             reject("Discord Client has already been initiated.");
@@ -42,15 +42,20 @@ export async function initDiscordClient( tok: string ): Promise<DiscordClient>
             ]});
         }
         catch( e ) { reject(e) }
-        discordClient.login( tok );
+        await discordClient.login( tok )
+            .catch(reject)
 
         discordClient.on( "ready", async () => 
         {
             const guildID = discordClient.guilds.cache.map( guild => guild.id);
-            const guildName = discordClient.guilds.cache.map(guid => guid.name);
+            const guildName = discordClient.guilds.cache.map( guid => guid.name );
+
+            if( !isDefined(guildName) || !isDefined(guildName[0]) || guildName[0] == "" )
+                reject("Has the bot joined any server? Or are you using an expired token?");
+
             discordClient.guildId = guildID[0];
             discordClient.guildName = guildName[0];
-            await discordClient.user?.setAvatar("https://cdn.discordapp.com/attachments/719492117294088252/832286558488100884/cod4logo.png");
+            await discordClient.user?.setAvatar("https://images-ext-1.discordapp.net/external/59mjxCV4jJOKbE0aygO_BWOs8QT98Tc4j29Fc768_XY/https/pngimage.net/wp-content/uploads/2018/05/cod4-png-6.png")
             resolve(discordClient);
         });
         discordClient.once( "error", err => reject(err) );

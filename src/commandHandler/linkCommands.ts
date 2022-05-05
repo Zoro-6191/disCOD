@@ -17,10 +17,11 @@ var sourceEmbed: MessageEmbed;
 linkCmds[0] = {
     name: "link",
     alias: [],
-    description: "Link to B3 ID",
+    description: "Link to B3 ID\nType !id ingame to know your B3 ID",
     minLevel: 0,
     visibleToAllByDefault: true,
     type: "both",
+    calledOn: "self",
     acceptArgs: { b3id: true },
     callback: cmd_link as any,
 }
@@ -53,6 +54,7 @@ linkCmds[2] = {
     minLevel: 100,
     type: "both",
     visibleToAllByDefault: true,
+    calledOn: "other",
     acceptArgs: {
         target: true,
         b3id: true
@@ -68,6 +70,7 @@ linkCmds[3] = {
     minLevel: 100,
     type: "both",
     visibleToAllByDefault: true,
+    calledOn: "other",
     acceptArgs: {
         target: false,
         b3id: false
@@ -143,18 +146,18 @@ export async function cmd_link(
 {  
     const embed = new MessageEmbed().setColor(themeColor);
 
-    if( arg.commander != undefined && arg.link != undefined )
+    if( arg.commander != undefined && arg.commanderLink != undefined )
         return embed.setDescription(`🔗 You're already linked to \`@${arg.commander.id}\``);
-    else if( arg.link != undefined && arg.commander == undefined )
+    else if( arg.commanderLink != undefined && arg.commander == undefined )
     {
-        if( arg.link.b3_id == arg.b3id )
+        if( arg.commanderLink.b3_id == arg.b3id )
             return embed.setDescription(`🔗 Linked already initiated to \`@${arg.b3id}\`\nCheck DM.`);
-        else return embed.setDescription(`❌ Linked already initiated to \`@${arg.link.b3_id}\`\n**/unlink** before linking new ID.`);
+        else return embed.setDescription(`❌ Linked already initiated to \`@${arg.commanderLink.b3_id}\`\n**/unlink** before linking new ID.`);
     }
-    else if( arg.link == undefined && arg.commander != undefined )
+    else if( arg.commanderLink == undefined && arg.commander != undefined )
         throw new Error(`Link: commander and link fetched different`);
 
-    const IDValidChec = await rawQuery(`SELECT * FROM clients WHERE id=${arg.b3id}`);
+    const IDValidChec = await db.rawQuery(`SELECT * FROM clients WHERE id=${arg.b3id}`);
         if(!IDValidChec.length)
             return embed.setDescription(`❌ Invalid ID`);
     
@@ -192,7 +195,7 @@ export async function cmd_link(
 
     let password: string = Math.floor(Math.random() * 100000000).toString();
     
-    await rawQuery(`INSERT INTO discod(b3_id,dc_id,dc_tag,pass,time_add) VALUES (${arg.b3id},${user.id},'${user.tag}',${password},UNIX_TIMESTAMP());`);
+    await db.rawQuery(`INSERT INTO discod(b3_id,dc_id,dc_tag,pass,time_add) VALUES (${arg.b3id},${user.id},'${user.tag}',${password},UNIX_TIMESTAMP());`);
 
     // TO-DO: link to dm
     await dmMsg.edit({ embeds: [
@@ -227,7 +230,7 @@ export async function cmd_unlink(
     if( arg.link == undefined )
         return embed.setDescription(`❌ Link doesn't exist`);
 
-    await rawQuery(`DELETE FROM discod WHERE b3_id = ${arg.link.b3_id} OR dc_id = ${arg.link.dc_id}`);
+    await db.rawQuery(`DELETE FROM discod WHERE b3_id = ${arg.link.b3_id} OR dc_id = ${arg.link.dc_id}`);
 
     // Emit unlink event
     events.emit("unlink", arg );
@@ -245,11 +248,11 @@ export async function cmd_forcelink( arg: {
 {
     const embed = new MessageEmbed().setColor(themeColor);
 
-    const IDValidChec = await rawQuery(`SELECT * FROM clients WHERE id=${arg.b3id}`);
+    const IDValidChec = await db.rawQuery(`SELECT * FROM clients WHERE id=${arg.b3id}`);
     if(!IDValidChec.length)
         return embed.setDescription(`❌ Invalid ID`);
 
-    const exisChec = await rawQuery(`SELECT * FROM discod WHERE dc_id=${arg.target.id} OR b3_id=${arg.b3id}`);
+    const exisChec = await db.rawQuery(`SELECT * FROM discod WHERE dc_id=${arg.target.id} OR b3_id=${arg.b3id}`);
     if( exisChec.length )
     {
         const exisUser = discordClient.users.cache.find( user => user.id == exisChec[0].dc_id );
@@ -258,7 +261,7 @@ export async function cmd_forcelink( arg: {
             console.log("Here");
             
             // just need to change linked to 1 and timestamp "linktime"
-            await rawQuery(`UPDATE discod 
+            await db.rawQuery(`UPDATE discod 
                 SET linked=1,
                     linktime=UNIX_TIMESTAMP()
                 WHERE b3_id=${arg.b3id}`);
@@ -276,7 +279,7 @@ export async function cmd_forcelink( arg: {
             return embed.setDescription(`❌ \`@${arg.b3id}\` is already linked to ${exisUser}`);
     }
     
-    await rawQuery(`INSERT INTO discod(b3_id,dc_id,dc_tag,pass,linked,linktime,time_add) VALUES (${arg.b3id},${arg.target.id},'${arg.target.tag}',0,1,UNIX_TIMESTAMP(),UNIX_TIMESTAMP());`);
+    await db.rawQuery(`INSERT INTO discod(b3_id,dc_id,dc_tag,pass,linked,linktime,time_add) VALUES (${arg.b3id},${arg.target.id},'${arg.target.tag}',0,1,UNIX_TIMESTAMP(),UNIX_TIMESTAMP());`);
 
     arg.target.send( { 
         embeds: [ new MessageEmbed().setDescription(`You were force-linked by Superadmin to B3 ID \`@${arg.b3id}\``).setThumbnail(tickImageURL) ] 
@@ -296,12 +299,12 @@ export async function cmd_forceunlink( arg: CommandArgument ): Promise<MessageEm
     const isTarget: boolean = arg.target != undefined;
 
     if( isTarget )
-        var exisChec = await rawQuery(`SELECT * FROM discod WHERE dc_id=${arg.target?.id}`);
-    else var exisChec = await rawQuery(`SELECT * FROM discod WHERE b3_id=${arg.b3id}`);
+        var exisChec = await db.rawQuery(`SELECT * FROM discod WHERE dc_id=${arg.target?.id}`);
+    else var exisChec = await db.rawQuery(`SELECT * FROM discod WHERE b3_id=${arg.b3id}`);
     if( !exisChec.length )
         return embed.setDescription(`❌ ${isTarget? arg.target: `\`@${arg.b3id}\``} hasn't linked yet`);
 
-    await rawQuery( `DELETE FROM discod WHERE b3_id = ${exisChec[0].b3_id}` );
+    await db.rawQuery( `DELETE FROM discod WHERE b3_id = ${exisChec[0].b3_id}` );
 
     // Emit unlink event
     events.emit("forcelink", arg );

@@ -23,12 +23,10 @@ export async function cmd_fullinfo( args: CommandArgument ): Promise<CommandResp
     const embed = new MessageEmbed().setColor(themeColor);
 
     const client = await getClientFromCommandArg( args )
-        .catch( () => {} );
-
     if( client == undefined )
         return;
 
-    const q = await rawQuery(`SELECT 
+    const q = await db.rawQuery(`SELECT 
 clients.name,clients.ip,clients.connections,clients.guid,clients.group_bits,clients.mask_level,clients.greeting,clients.time_add,clients.time_edit,
     discod.dc_id,discod.linktime,
     xlr_playerstats.kills,xlr_playerstats.deaths,xlr_playerstats.ratio,xlr_playerstats.skill,xlr_playerstats.rounds

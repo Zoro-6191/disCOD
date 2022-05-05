@@ -20,13 +20,6 @@ declare global
     }
 
     /**
-     * Direct Query to MySQL Database
-     * @param  {string} query
-     * @returns {object} result in object format
-     */
-    var rawQuery: ( query: string ) => Promise<any>;
-
-    /**
      * Check if `Clients` is linked or not
      * @param  {Clients|number} client | B3 ID
      * returns `Discod` entity
@@ -120,7 +113,7 @@ globalThis.SendEmbed = async ( opt: SendEmbedArgType ) =>
     
     // both ctx types have .reply property exactly same
     // if( opt.ctx instanceof Message )
-        await opt.ctx.reply( { embeds: [ embed ] });
+        await opt.ctx.reply( { embeds: [ embed ] }).catch(ErrorHandler.minor)
     // else if( opt.ctx instanceof Interaction )
     //     opt.ctx.re
 }

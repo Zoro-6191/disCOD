@@ -1,15 +1,17 @@
 
 // Format:
 // {
-//     name: "Command Name" (string),
+//     name: "Command Name" (string, without space),
 // 
 //     description: "What does the command do?" (string),
 // 
 //     minLevel: "Which level people can use the command?" (integer),
 // 
-//     alias: [ "alias 1", "alias 2" ... no limit ],
+//     alias: [ "alias1", "alias2" ... no limit ],
 //
-//     acceptArgs: What arguments are acceptable? (array of strings)
+//     calledOn: "self" or "other" or "both" ( define if the command should work when a player is specified or not )
+//
+//     acceptArgs: What arguments are acceptable?
 //              [ options: 
 //                         "target" - Mention a person
 //                         "slot" - if the player is currently in server
@@ -17,14 +19,36 @@
 //                         "guid" - !xuid of player
 //                         "visible2all" - should it be visible to everyone
 //                         "others" - for other type of commands like !mask and !greeting
+
+//                          o
 //              ],
-//               Example: acceptArgs: [ "target/b3id/guid", "visible2all" ],
-//               --> will make it so command accepts one of target/b3id/guid and visible2all as arguments                        
-//                        acceptArgs: [], --> accept no arguments for command
+// Example: acceptableArgs: {
+//     // target: true means mentioning a player is necessary
+//     target: true,
+//     // b3id: false means you can either specify a b3id or not, command should still work
+//     b3id: false,
+//     slot: false,
+//     guid: false,
+//     visible2all: false,
+//     other: [
+//         {
+//             name: "customarg1",
+//             type: "string",
+//             required: false,
+//             // this argument will accept any string
+//         },
+//         {
+//             name: "customarg2",
+//             type: "role",
+//             required: true,
+//             // this argument will accept role mentions as options
+//         }
+//     ]
+// }                     
+//                        acceptArgs: {}, --> accept no arguments for command
 //
-//     // if acceptableArgs includes "others"
-//     // type of this arg also has to be mentioned, options are: "number" | "string" | "array"
-//     otherArgs: { "1st other arg": true/false (required or optional) }
+//     // if acceptableArgs includes "other"
+//     // type of this arg also has to be mentioned, options are: "string" | "boolean" | "channel" | "int" | "mention" | "number" | "role"
 //      
 //     
 //     // How should the command be called?
@@ -41,6 +65,7 @@
             minLevel: 20,
             alias: [ "aa" ],
             type: "slash",
+            calledOn: "other",
             acceptArgs: {
                 target: false,
                 b3id: false,
@@ -56,6 +81,7 @@
             minLevel: 60,
             alias: ['b'],
             type: "slash",
+            calledOn: "other",
             acceptArgs: {
                 target: false,
                 b3id: false,
@@ -72,6 +98,7 @@
             minLevel: 40,
             alias: [],
             type: "slash",
+            calledOn: "both",
             acceptArgs: {
                 target: false,
                 b3id: false,
@@ -109,6 +136,7 @@
             minLevel: 1,
             alias: ["ss","pbss"],
             type: "slash",
+            calledOn: "other",
             acceptArgs: {
                 slot: true,
                 visible2all: false
@@ -121,6 +149,7 @@
             minLevel: 60,
             alias: [],
             type: "slash",
+            calledOn: "both",
             acceptArgs: {
                 target: false,
                 b3id: false,
@@ -130,11 +159,29 @@
             visibleToAllByDefault: true,
         },
         {
+            name: "help",
+            description: "Get to know the bot",
+            minLevel: 0,
+            alias: [ 'h' ],
+            type: 'slash',
+            acceptArgs: {
+                other: [
+                    {
+                        name: "command",
+                        type: "string",
+                        required: false,
+                        description: "Enter a command to know more about it"
+                    },
+                ]
+            }
+        },
+        {
             name: "id",
             description: "Fetch ID",
             minLevel: 1,
             alias: ["b3id"],
             type: "slash",
+            calledOn: "both",
             acceptArgs: {
                 target: false,
                 slot: false,
@@ -160,6 +207,7 @@
             minLevel: 40,
             alias: ["lt"],
             type: "slash",
+            calledOn: "both",
             acceptArgs: {
                 target: false,
                 b3id: false,
@@ -191,6 +239,7 @@
                         name: "name",
                         type: "string",
                         required: true,
+                        description: "Enter name of the player to look into the database"
                     },
                 ]
             },
@@ -238,6 +287,7 @@
             minLevel: 80,
             alias: [],
             type: "slash",
+            calledOn: "both",
             acceptArgs: {
                 target: false,
                 b3id: false,
@@ -252,6 +302,7 @@
             minLevel: 80,
             alias: [],
             type: "slash",
+            calledOn: "both",
             acceptArgs: {
                 target: false,
                 b3id: false,
@@ -265,6 +316,7 @@
             minLevel: 100,
             alias: ["pg"],
             type: "slash",
+            calledOn: "other",
             acceptArgs: {
                 target: false,
                 b3id: false,
@@ -291,6 +343,7 @@
             minLevel: 20,
             alias: [],
             type: "slash",
+            calledOn: "other",
             acceptArgs: {
                 target: false,
                 b3id: false,
@@ -304,6 +357,7 @@
             minLevel: 80,
             alias: [],
             type: "slash",
+            calledOn: "other",
             acceptArgs: {
                 target: false,
                 b3id: false,
@@ -319,6 +373,7 @@
             minLevel: 80,
             alias: [],
             type: "slash",
+            calledOn: "both",
             acceptArgs: {
                 target: false,
                 b3id: false,
@@ -332,6 +387,7 @@
             minLevel: 1,
             alias: [ "xlr" ],
             type: "slash",
+            calledOn: "both",
             acceptArgs: {
                 target: false,
                 b3id: false,

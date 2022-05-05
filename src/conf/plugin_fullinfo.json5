@@ -4,10 +4,11 @@
     commands: [
         {
             name: 'fullinfo',
-            alias: [ 'fi' ],
-            minLevel: 100,
-            type: 'slash',
             description: "Display full info of player",
+            minLevel: 100,
+            alias: [ 'fi' ],
+            type: 'slash',
+            calledOn: 'other',
             acceptArgs: {
                 target: false,
                 b3id: false,

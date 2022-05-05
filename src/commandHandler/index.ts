@@ -1,5 +1,5 @@
 // import "json5/lib/register";
-import { ColorResolvable, CommandInteraction, Interaction, Message, User } from "discord.js";
+import { ColorResolvable, CommandInteraction, Interaction, Message } from "discord.js";
 import { getRepository } from "typeorm";
 import { SlashCommandBuilder } from "@discordjs/builders"
 import { isArray } from "util";
@@ -11,7 +11,7 @@ import defaultCmdsConfig from "../conf/default_cmds.json5";
 import { Clients } from "../entity/Clients";
 import { registerLinkCommands } from "./linkCommands";
 import { Discod } from "../entity/Discod";
-import { CommandResponse } from "./helper";
+import { CommandArgument, CommandResponse, getClientFromCommandArg } from "./helper";
 import { Timer } from "../utilities";
 
 var fetchedSlashCommands: any[] = [];
@@ -26,6 +26,7 @@ declare global
         description: string,
         type: "slash" | "prefix" | "both",
         visibleToAllByDefault: boolean,
+        calledOn?: "self" | "other" | "both",
         acceptArgs: { 
             target?: boolean, 
             b3id?: boolean,
@@ -112,7 +113,6 @@ export async function initCommandManager()
             .catch(ErrorHandler.minor);
     }
 
-
     // catch and process slash commands
     if( mainconfig.command.type != "prefix" )
         discordClient.on( "interactionCreate", async IC => processIncomingCommand( IC as CommandInteraction ) )
@@ -120,26 +120,6 @@ export async function initCommandManager()
     // catch and process prefix commands
     if( mainconfig.command.type != "slash" )
         discordClient.on( "messageCreate", async msg => processIncomingCommand(msg) );
-}
-
-type CommandArgument = { 
-    ctx: Message | CommandInteraction,
-    isSlashCommand: boolean,
-    commander?: Clients | null, 
-    cmd: Command, 
-    link?: Discod | null,
-    target?: User,
-    b3id?: number,
-    slot?: number,
-    guid?: string,
-    name?: string,
-    text?: string,
-    maptoken?: string,
-    gametype?: string,
-    group?: string,
-    reason?: string,
-    visible2all?: boolean,
-    other: any
 }
 
 async function processIncomingCommand( ctx: Message | CommandInteraction )
@@ -196,7 +176,7 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
             return await ctx.reply({
                 embeds: [CreateBasicEmbed({desc: mainconfig.msgs.err_in_cmd})],
                 ephemeral: true,
-            });
+            }).catch(ErrorHandler.minor)
         }
         else return await SendEmbed( { ctx, desc: `❌ Unrecognized Command` } );
     }
@@ -234,7 +214,7 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
             isSlashCommand: isInteraction,
             commander, 
             cmd, 
-            link: discodQ,
+            commanderLink: discodQ,
             other: {}
         };
     }
@@ -247,6 +227,7 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
         {
             case "target":
                 argObject.target = argOpt.user;
+                
                 break;
             case "b3id":
                 argObject.b3id = argOpt.value as number;
@@ -285,6 +266,72 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
         }
     }
 
+    // have i specified a player if the command requires me to?
+    if( cmd.calledOn != undefined && commander != undefined )
+    {
+        if( cmd.calledOn != "self" )
+        {
+            if( !isDefined(argObject.b3id) || !isDefined(argObject.target) || !isDefined(argObject.slot) || !isDefined(argObject.guid) )
+            {
+                var specfiedClient = await getClientFromCommandArg( argObject, {
+                    BAD_B3ID: cmd.acceptArgs.b3id,
+                    BAD_GUID:cmd.acceptArgs.guid,
+                    NO_LINK:false,
+                    SLOT_EMPTY:cmd.acceptArgs.slot
+                } ).catch(() => {});
+                if( specfiedClient == undefined )
+                {
+                    if( cmd.calledOn == "other" )
+                        return await SendEmbed({ctx,desc: `❌ Specify a player. Type **/help** 1`});
+                    else
+                    {
+                        argObject.specifiedClient = commander;
+                        argObject.specifiedClientLink = discodQ;
+                    }
+                }
+                else 
+                {
+                    argObject.specifiedClient = specfiedClient;
+                    argObject.specifiedClientLink = await getLink(specfiedClient);
+                }
+            }
+        }
+        else
+        {
+            argObject.specifiedClient = commander;
+            argObject.specifiedClientLink = discodQ;
+        }
+    }
+
+    // other basic specifications which a command may have
+    if( cmd.acceptArgs.group != undefined )
+    {
+        if(  argObject.group == undefined )
+            return await SendEmbed({ ctx, desc: `❌ Specifiy a Group`});
+        const specifiedGroup = Ops.getGroupFromKeyword(argObject.group);
+        if( specifiedGroup == undefined )
+            return await SendEmbed({ ctx, desc: `❌ Invalid Group **${argObject.group}**`});
+        argObject.specifiedGroup = specifiedGroup;
+    }
+    if( cmd.acceptArgs.maptoken != undefined )
+    {
+        if(  argObject.maptoken == undefined )
+            return await SendEmbed({ ctx, desc: `❌ Specifiy a Map`});
+        const specifiedMap = (GlobalMaps as any)[argObject.maptoken];
+        if( specifiedMap == undefined )
+            return await SendEmbed({ ctx, desc: `❌ Unknown map **${argObject.maptoken}**`});
+        argObject.specifiedMap = specifiedMap;
+    }
+    if( cmd.acceptArgs.gametype != undefined )
+    {
+        if(  argObject.gametype == undefined )
+            return await SendEmbed({ ctx, desc: `❌ Specifiy a Gametype`});
+        const specifiedGametype = (GlobalGametypes as any)[argObject.gametype];
+        if( specifiedGametype == undefined )
+            return await SendEmbed({ ctx, desc: `❌ Unknown map **${argObject.maptoken}**`});
+        argObject.specifiedGametype = specifiedGametype;
+    }
+
     // call our command
     var response: CommandResponse;
     try
@@ -297,7 +344,7 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
         await ctx.reply({
                 embeds: [CreateBasicEmbed({desc: mainconfig.msgs.err_in_cmd})],
                 ephemeral: true,
-            });
+            }).catch(ErrorHandler.minor)
         return;
     }
 
@@ -372,7 +419,7 @@ async function checkLink( ctx: Message | CommandInteraction, discodQ: Discod | n
                     title: `❌ You haven't linked your B3 ID to disCOD yet.`,
                     desc: `Type **/help link** to know more`})],
                 ephemeral: true,
-            });
+            }).catch(ErrorHandler.minor)
         return false;
     }
     else if( discodQ.linked == 0 )
@@ -383,7 +430,7 @@ async function checkLink( ctx: Message | CommandInteraction, discodQ: Discod | n
                     title: `❌ Your link is unverified`,
                     desc: `Check DM` })],
                 ephemeral: true,
-            });
+            }).catch(ErrorHandler.minor)
         return false;
     }
     return true;
@@ -425,6 +472,8 @@ async function checkPower( ctx: Message | CommandInteraction, cmd: Command, clie
 
 async function registerCommand( options: Command ): Promise<any>
 {
+    // TO-DO: compare existing slash command options and new one and if diff change it
+
     // always need lowercase
     options.name = options.name.toLocaleLowerCase();
     for( var i = 0; i < options.alias.length; i++ )
@@ -435,11 +484,14 @@ async function registerCommand( options: Command ): Promise<any>
     const alreadyRegisteredSlashCommand = fetchedSlashCommands.find( (cmd: any) => cmd.name == options.name );
 
     if( exists )
-        throw new Error(`Command ${options.name} already exists, unregister it first`);
+        ErrorHandler.fatal(`Command ${options.name} already exists, unregister it first`);
 
     var currentSlashCommand: SlashCommandBuilder = new SlashCommandBuilder()
                     .setName(options.name)
                     .setDescription(options.description);
+
+    if( (isDefined(options.acceptArgs.b3id) || isDefined(options.acceptArgs.target) || isDefined(options.acceptArgs.guid) || isDefined(options.acceptArgs.slot)) && !isDefined(options.calledOn) )
+        ErrorHandler.fatal(`Option "calledOn" has to be defined while creating a command which accepts "b3id" | "target" | "guid" | "slot". Please define it for command ${options.name}`);
 
     const accInput: any = Object.fromEntries(Object.entries(options.acceptArgs).sort( ([,x],[,y]) => (x === y)? 0 : x? -1 : 1 ));    
 
@@ -671,7 +723,7 @@ function getCommandsFromMinLevel(level: number): Command[]
     for( var i = 0; i  < GlobalCommands.length; i++ )
     {
         const cmd = GlobalCommands[i];
-        if( cmd.minLevel >= level )
+        if( level >= cmd.minLevel )
             availCmds.push(cmd);
     }
     return availCmds;

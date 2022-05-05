@@ -9,7 +9,13 @@ export type CommandArgument = {
     isSlashCommand: boolean,
     commander?: Clients | null, 
     cmd: Command, 
-    link?: Discod | null,
+    commanderLink?: Discod | null,
+    calledOn?: "self" | "other",
+    specifiedClient?: Clients,
+    specifiedClientLink?: Discod | null,
+    specifiedMap?: string,
+    specifiedGametype?: string,
+    specifiedGroup?: GlobalGroup,
     target?: User,
     b3id?: number,
     slot?: number,
@@ -30,7 +36,7 @@ type ReplyTo = {
     BAD_B3ID?: boolean;
     BAD_GUID?: boolean;
     NO_LINK?: boolean;
-    SLOT_EMPTY?: false;
+    SLOT_EMPTY?: boolean;
 }
 
 export async function getClientFromCommandArg(
@@ -42,19 +48,6 @@ export async function getClientFromCommandArg(
     {
         const embed = new MessageEmbed()
             .setColor(themeColor);
-
-        // if( !isDefined(arg.b3id) && !isDefined(arg.guid) && !isDefined(arg.slot) && !isDefined(arg.target) )
-        if( arg.b3id == undefined && arg.guid == undefined && arg.slot == undefined && arg.target == undefined )
-        {            
-            if( replyTo == undefined )
-            {
-                arg.ctx.reply({
-                    embeds: [embed.setDescription(`❌ Specify a player. Type **/help**`)],
-                    ephemeral: true,
-                });
-            }
-            reject("CLIENT_UNSPECIFIED");
-        }
 
         if( arg.b3id != undefined )
         {
