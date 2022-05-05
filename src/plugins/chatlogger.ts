@@ -1,7 +1,7 @@
 import { MessageEmbed,TextChannel } from "discord.js";
 import pluginConf from "../conf/plugin_chatlogger.json5";
-import * as fs from "fs";
-import * as chokidar from "chokidar";
+import { existsSync, readFile } from "fs";
+import chokidar from "chokidar";
 
 export const config_required = true;
 
@@ -12,7 +12,7 @@ export async function init(): Promise<void>
     // Check errors in config file
     if (content == "") {
        return ErrorHandler.minor(` Please specify the Server Logfile in plugin config "./conf/plugin_serverlog.json5" Plugin will not work`)
-    } else if( !fs.existsSync(content) )
+    } else if( !existsSync(content) )
     return ErrorHandler.minor(` "serverLog" in plugin config "./conf/plugin_chatlogger.json5" defined incorrectly. ${content} doesn't exist. Plugin will not work.`)
 
 
@@ -42,7 +42,7 @@ export async function init(): Promise<void>
 
         chokidar.watch(content).on('change', async (path) => {
         
-          fs.readFile(path, 'utf-8', async (err, data) => {
+          readFile(path, 'utf-8', async (err, data) => {
        
 
     // display an error if file is not readable
