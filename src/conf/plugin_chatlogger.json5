@@ -1,8 +1,15 @@
 {
     enabled: true,
+    
+    // channel id for the recieving channel
     channel_id: "9419200000000000000",
-    serverlog: "/home/cod4server/Mods/your_mod/promod_mp.log",
+    
+    // path to chat log
+    serverlog: "/home/cod4server/mods/your_mod/promod_mp.log",
+
     playerstatsLink: "",
+    
+    // embed colors
     embed_color_public: "#eb0206",
     embed_color_team: "#87ceeb"
 }
