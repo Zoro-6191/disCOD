@@ -1,3 +1,4 @@
+// plugin requires bot to run on same system as cod server, and permission to read the log file
 {
     enabled: true,
     
