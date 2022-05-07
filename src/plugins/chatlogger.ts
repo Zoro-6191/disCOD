@@ -11,7 +11,7 @@ export async function init(): Promise<void>
 
     // Check errors in config file
     if (content == "") {
-       return ErrorHandler.minor(` Please specify the Server Logfile in plugin config "./conf/plugin_serverlog.json5" Plugin will not work`)
+       return ErrorHandler.minor(` Please specify the Server Logfile in plugin config "./conf/plugin_chatlogger.json5" Plugin will not work`)
     } else if( !existsSync(content) )
     return ErrorHandler.minor(` "serverLog" in plugin config "./conf/plugin_chatlogger.json5" defined incorrectly. ${content} doesn't exist. Plugin will not work.`)
 
