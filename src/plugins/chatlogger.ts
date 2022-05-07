@@ -1,7 +1,7 @@
 import { MessageEmbed,TextChannel } from "discord.js";
 import pluginConf from "../conf/plugin_chatlogger.json5";
-import { existsSync, readFile } from "fs";
-import chokidar from "chokidar";
+import { existsSync } from "fs";
+import {Tail} from "tail";
 
 export const config_required = true;
 
@@ -11,26 +11,22 @@ export async function init(): Promise<void>
 
     // Check errors in config file
     if (content == "") {
-       return ErrorHandler.minor(` Please specify the Server Logfile in plugin config "./conf/plugin_chatlogger.json5" Plugin will not work`)
+       throw new Error(` Please specify the Server Logfile in plugin config "./conf/plugin_chatlogger.json5" Plugin will not work`)
     } else if( !existsSync(content) )
-    return ErrorHandler.minor(` "serverLog" in plugin config "./conf/plugin_chatlogger.json5" defined incorrectly. ${content} doesn't exist. Plugin will not work.`)
+    throw new Error(` "serverLog" in plugin config "./conf/plugin_chatlogger.json5" defined incorrectly. ${content} doesn't exist. Plugin will not work.`)
 
-
-    if (!pluginConf.embed_color_team) {
-        var embed_color = themeColor
-       return ErrorHandler.minor(`" embed_color" in plugin config "./conf/plugin_chatlogger.json5" not defined. Using "${themeColor}"`)
-    } else var embed_color_team = pluginConf.embed_color_team
+    var embed_color_team = pluginConf.embed_color_team || themeColor;
 
     if (!pluginConf.embed_color_public) {
         var embed_color = themeColor
-       return ErrorHandler.minor(`" embed_color" in plugin config "./conf/plugin_chatlogger.json5" not defined. Using "${themeColor}"`)
+       throw new Error(`"embed_color" in plugin config "./conf/plugin_chatlogger.json5" not defined. Using "${themeColor}"`)
     } else var embed_color = pluginConf.embed_color_public
 
     if( pluginConf.channel_id == "" )
-        return ErrorHandler.minor(`" channel_id" in plugin config "./conf/plugin_chatlogger.json5" not defined. Plugin will not work.`) 
+        throw new Error(`"channel_id" in plugin config "./conf/plugin_chatlogger.json5" not defined. Plugin will not work.`) 
     
     if ( discordClient.channels.cache.get(pluginConf.channel_id) === undefined) {
-        return ErrorHandler.minor(` Specified "channel_id" in plugin config "./conf/plugin_chatlogger.json5" does not exist. Plugin will not work`)
+        throw new Error(`Specified "channel_id" in plugin config "./conf/plugin_chatlogger.json5" does not exist. Plugin will not work`)
     }
 
     const logChannel: TextChannel = discordClient.channels.cache.get(pluginConf.channel_id) as TextChannel;
@@ -40,60 +36,37 @@ export async function init(): Promise<void>
         ErrorHandler.minor(`"playerstatsLink" in plugin config "./conf/plugin_chatlogger.json5" not defined. Using default Link.`)
     }
 
-        chokidar.watch(content).on('change', async (path) => {
-        
-          readFile(path, 'utf-8', async (err, data) => {
-       
+    const logTail = new Tail(content);
 
-    // display an error if file is not readable
-    if (err) {
-        return ErrorHandler.minor(`Error reading file ${content}`)
-    }
+    logTail.on('line', async(newline) => 
+    {
+        if( newline.includes("QUICKMESSAGE") )
+            return;
 
-    let lines = data.trim().split("\n")
+        const embed = new MessageEmbed();
+        const lineArray:any = new String(newline).split(";");
+        const b3id = await getB3ID(lineArray[1]);
+        var line = `**[${lineArray[3]}](${statsUrl}${b3id})** Said: ${lineArray[4].replace("", "").replace("", "")}`;
+        var footer = ` | GUID: ${lineArray[1].slice(11)} | B3ID: @${b3id}`;
 
-        lineToSend = lines[lines.length - 1]
+        if( newline.includes("say;") )
+            embed.setColor(embed_color)                    
+                .setFooter({"text": `[Public Chat]`+footer})
+        else if( newline.includes("sayteam;") ) 
+            embed.setColor(embed_color_team)
+                .setFooter({"text": `[Team Chat]`+footer});
+    
+        await logChannel.send({ embeds: [embed.setDescription(line)]})
+            .catch(()=>{}); // incase discord having issues
+    })
 
-
-        if (lineToSend.includes("say;") && !lineToSend.includes("QUICKMESSAGE")) {
-
-            const lineArray:any = new String(lineToSend).split(";")
-
-            const b3id = await getB3ID(lineArray[1])
-
-            var lineToSend = `**[${lineArray[3]}](${statsUrl}${b3id})** Said: ${lineArray[4].replace("", "").replace("", "")}`
-
-            const embed = new MessageEmbed()
-            .setColor(embed_color)
-            .setDescription(lineToSend)
-            .setFooter({"text": `[Public Chat] | GUID: ${lineArray[1].slice(11)} | B3ID: @${b3id}`})
-
-       await logChannel.send({ embeds: [embed]})
-
-        } else if (lineToSend.includes("sayteam;") && !lineToSend.includes("QUICKMESSAGE")) {
-
-            const lineArray1 = new String(lineToSend).split(";")
-
-            const b3id = await getB3ID(lineArray1[1])
-
-            var lineToSend = `**[${lineArray1[3]}](${statsUrl}${b3id})** Said: ${lineArray1[4].replace("", "").replace("", "")}`
-
-            const embed2 = new MessageEmbed()
-            .setColor(embed_color_team)
-            .setDescription(lineToSend)
-            .setFooter({"text": `[Team Chat] | GUID: ${lineArray1[1].slice(11)} | B3ID: @${b3id}`})
-
-        await logChannel.send({ embeds: [embed2]})
-
-        }
-        });
-    });
-
+    logTail.on("error", ErrorHandler.minor );
 }
 
-const getB3ID = async (guid: any) => {
-    const result = await rawQuery( `SELECT id FROM clients WHERE guid=${guid}` )
-                .catch( ErrorHandler.fatal )
-            var id = result[0].id
-            return id;
-  }
+async function getB3ID(guid: any) 
+{
+    const result = await db.rawQuery( `SELECT id FROM clients WHERE guid=${guid}` )
+                .catch( ErrorHandler.fatal );
+    var id = result[0].id
+    return id;
+}

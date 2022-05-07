@@ -9,7 +9,7 @@ declare global
 type PluginOBJ = {
     name: string,
     config_required: boolean,
-    conf_path: string;
+    conf_path?: string;
     active: boolean
 }
 
@@ -18,7 +18,7 @@ export async function init(): Promise<void>
     // read plugins folder ig
 
     var allFiles = readdirSync("./build/plugins/");
-
+    globalThis.GlobalPlugins = [];
     i:
     for( var i = 0; i < allFiles.length; i++ )
     {
@@ -33,7 +33,7 @@ export async function init(): Promise<void>
         const imp = await import(`./plugins/${pluginName}.js`);
 
         if( imp.config_required == undefined )
-            throw new Error("config_required property of plugin "+pluginName+ " was not defined");
+            throw new Error("'config_required' property of plugin "+pluginName+ " was not defined");
 
         if( imp.init == undefined || !(imp.init instanceof Function) )
             throw new Error("Bad entry point in plugin "+pluginName );
@@ -53,12 +53,18 @@ export async function init(): Promise<void>
             {
                 parsedConf = await JSON5.parse(read)
             }
-            catch(e){ ErrorHandler.fatal(e) }
+            catch(e){ throw new Error(e) }
+
+            GlobalPlugins.push({
+                name: pluginName,
+                active: parsedConf.enabled,
+                config_required: imp.config_required,
+                conf_path: imp.config_required?confPath:undefined,
+            });
 
             if( !parsedConf.enabled )
                 continue i;
         }
-
         await imp.init();
     }
 }

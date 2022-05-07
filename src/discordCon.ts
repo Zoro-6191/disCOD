@@ -55,7 +55,7 @@ export async function initDiscordClient( tok: string ): Promise<DiscordClient>
 
             discordClient.guildId = guildID[0];
             discordClient.guildName = guildName[0];
-            await discordClient.user?.setAvatar("https://images-ext-1.discordapp.net/external/59mjxCV4jJOKbE0aygO_BWOs8QT98Tc4j29Fc768_XY/https/pngimage.net/wp-content/uploads/2018/05/cod4-png-6.png")
+            await discordClient.user?.setAvatar("https://images-ext-1.discordapp.net/external/59mjxCV4jJOKbE0aygO_BWOs8QT98Tc4j29Fc768_XY/https/pngimage.net/wp-content/uploads/2018/05/cod4-png-6.png").catch(()=>{});
             resolve(discordClient);
         });
         discordClient.once( "error", err => reject(err) );

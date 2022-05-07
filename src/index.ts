@@ -79,11 +79,20 @@ async function main()
     // 5. init and start receiving commands
     const cmdSpinr = ora(chalk.yellow(`Registering Default Commands`)).start();
     await initCommandManager()
-        .catch( ErrorHandler.fatal )
+        .catch( err => {
+            cmdSpinr.fail(`Failed to init commands`);
+            ErrorHandler.fatal(err);
+        }  )
         .then( () => { cmdSpinr.succeed(`Registered default commands (${GlobalCommands.length})` + chalk.yellow(` - ${stepTimer.getTime()}ms`)) });
 
     // 6. Plugins
-    initPlugins();
+    const pluginSpinner = ora(chalk.yellow(`Loading Plugins`)).start();
+    await initPlugins()
+        .catch( err => {
+            pluginSpinner.fail(`Failed to load plugins`);
+            ErrorHandler.fatal(err);
+        }  )
+        .then( () => { pluginSpinner.succeed(`Loaded ${GlobalPlugins.length} plugins` + chalk.yellow(` - ${stepTimer.getTime()}ms`)) });
 
     // 7. Display our thing :D
     showDisCOD();
