@@ -1,4 +1,5 @@
+// commentable
 dm:Deathmatch
 war:Team Deathmatch
-sd:Search and destroy
+sd:Search and Destroy
 sr:Search and Rescue
