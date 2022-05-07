@@ -31,26 +31,31 @@ export async function init(): Promise<void>
 
     const logChannel: TextChannel = discordClient.channels.cache.get(pluginConf.channel_id) as TextChannel;
 
-    if (pluginConf.playerstatsLink == "") { 
-        var statsUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-        ErrorHandler.minor(`"playerstatsLink" in plugin config "./conf/plugin_chatlogger.json5" not defined. Using default Link.`)
-    }
+    if( !pluginConf.playerstatsLink )
+        var statsUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
     const logTail = new Tail(content);
 
     logTail.on('line', async(newline) => 
     {
-        if( newline.includes("QUICKMESSAGE") )
+        if( newline.includes("QUICKMESSAGE") || newline == "" )
             return;
 
         const embed = new MessageEmbed();
-        const lineArray:any = new String(newline).split(";");
+        const lineArray:string[] = new String(newline).split(";");
+        if( lineArray.length < 5 )
+            return;
+        const guid = lineArray[1];
         const b3id = await getB3ID(lineArray[1]);
-        var line = `**[${lineArray[3]}](${statsUrl}${b3id})** Said: ${lineArray[4].replace("", "").replace("", "")}`;
-        var footer = ` | GUID: ${lineArray[1].slice(11)} | B3ID: @${b3id}`;
+        const playerName = (lineArray[3] as string).removeCodColors();
+        lineArray.splice(0,3);
+        const said = lineArray.join(";").replace("", "").replace("", "").removeCodColors();
+
+        var line = `**[${playerName}](${statsUrl}${b3id})** Said: ${said}`;
+        var footer = ` | GUID: ${guid.slice(11)} | B3ID: @${b3id}`;
 
         if( newline.includes("say;") )
-            embed.setColor(embed_color)                    
+            embed.setColor(embed_color)
                 .setFooter({"text": `[Public Chat]`+footer})
         else if( newline.includes("sayteam;") ) 
             embed.setColor(embed_color_team)
@@ -58,7 +63,7 @@ export async function init(): Promise<void>
     
         await logChannel.send({ embeds: [embed.setDescription(line)]})
             .catch(()=>{}); // incase discord having issues
-    })
+    });
 
     logTail.on("error", ErrorHandler.minor );
 }
@@ -66,7 +71,6 @@ export async function init(): Promise<void>
 async function getB3ID(guid: any) 
 {
     const result = await db.rawQuery( `SELECT id FROM clients WHERE guid=${guid}` )
-                .catch( ErrorHandler.fatal );
-    var id = result[0].id
-    return id;
+        .catch( ErrorHandler.fatal );
+    return result[0].id;
 }
