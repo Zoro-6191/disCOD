@@ -1,7 +1,5 @@
 import { MessageEmbed, ColorResolvable, Message, CommandInteraction } from "discord.js";
-import { getRepository } from "typeorm";
 import mainConfig from "./conf/config.json5";
-import { Aliases } from "./entity/Aliases";
 import { Clients } from "./entity/Clients";
 import { Discod } from "./entity/Discod";
 
@@ -48,16 +46,6 @@ declare global
 
     var CreateBasicEmbed: ( options: CreateBasicEmbedArgType ) => MessageEmbed;
     var SendEmbed: ( options: SendEmbedArgType ) => Promise<void>;
-    
-    /**
-     * Get Alias string of client
-     * 
-     * @param  {Clients} client or `{ id: number, name: string }`
-     * @param  {number} charLength<br>
-     * 
-     * returns directly usable string
-     */
-    var getAliasString: ( client: Clients | { id: number, name: string }, charLength: number ) => Promise<string>;
 
     var getReadableDateFromTimestamp: ( timestamp: number ) => string;
 }
@@ -137,50 +125,6 @@ globalThis.CreateBasicEmbed = ( options: CreateBasicEmbedArgType ): MessageEmbed
     return embed;
 }
 
-
-globalThis.getAliasString = async ( client: Clients | { id: number, name: string }, charLength: number ): Promise<string> => 
-{
-    const aliases = await getRepository( Aliases ).createQueryBuilder("aliases")
-                                                    .select("aliases.alias")
-                                                    .where("aliases.client_id = :id", {id: client.id})
-                                                    .orderBy("aliases.num_used", "DESC")
-                                                    // .cache(true)
-                                                    .getMany();
-                                                    // find( { where: { clientId: client.id }} )
-    // console.log(aliases);
-
-    if( !aliases.length )
-        var aliasString: string = client.name;
-    else var aliasString: string = "";
-    var andMore = `...__and [x] more__ **[%t%]**`;
-
-    for( var i = 0; i < aliases.length; i++ )
-    {
-        const fix = aliases[i].alias
-                            .replace("`","\`")
-                            .replace("*","\*")
-                            .replace("~","\~")
-                            .replace("_","\_")
-                            .replace("\\","\\\\")
-                            .replace(">","\>");
-        
-
-        if( (aliasString.length + fix.length) < ( charLength - andMore.length ) )
-        {
-            if( i == aliases.length - 1 )
-                aliasString += fix + ` **[${aliases.length}]**`
-            else aliasString += fix + `, `;
-        }
-        else
-        {
-            aliasString += andMore.replace("[x]",(aliases.length - i).toString())
-                                    .replace("%t%", aliases.length.toString());
-            break;
-        } 
-    }
-    return aliasString;
-}
-
 globalThis.wait = (ms: number) =>
 {
     return new Promise((res) => setTimeout(res, ms));
@@ -197,7 +141,7 @@ globalThis.getReadableDateFromTimestamp = ( timestamp: number ): string =>
     const poop = new Date(timestamp*1000); 
     
     return poop.toDateString();    
-    return poop.getHours()+":"+poop.getMinutes().toString()+" "+poop.getDate()+"/"+(poop.getMonth()+1)+"/"+poop.getFullYear();
+    // return poop.getHours()+":"+poop.getMinutes().toString()+" "+poop.getDate()+"/"+(poop.getMonth()+1)+"/"+poop.getFullYear();
 }
 
 export class Timer
@@ -206,7 +150,7 @@ export class Timer
 
     constructor()
     {
-        this.updateTimer();
+        this.start = this.getEpoch();
         return this;
     }
 

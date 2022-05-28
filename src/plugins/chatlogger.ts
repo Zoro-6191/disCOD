@@ -15,13 +15,8 @@ export async function init(): Promise<void>
     else if( !existsSync(content) )
         throw new Error(` "serverLog" in plugin config "./conf/plugin_chatlogger.json5" defined incorrectly. ${content} doesn't exist. Plugin will not work.`);
 
+    var embed_color = pluginConf.embed_color_public || themeColor;
     var embed_color_team = pluginConf.embed_color_team || themeColor;
-
-    if (!pluginConf.embed_color_public) {
-        var embed_color = themeColor;
-        throw new Error(`"embed_color" in plugin config "./conf/plugin_chatlogger.json5" not defined. Using "${themeColor}"`);
-    } 
-    else var embed_color = pluginConf.embed_color_public;
 
     if( pluginConf.channel_id == "" )
         throw new Error(`"channel_id" in plugin config "./conf/plugin_chatlogger.json5" not defined. Plugin will not work.`) 

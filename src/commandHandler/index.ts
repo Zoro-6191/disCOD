@@ -4,6 +4,8 @@ import { getRepository } from "typeorm";
 import { SlashCommandBuilder } from "@discordjs/builders"
 import { isArray } from "util";
 import chalk from "chalk";
+const { REST } = require('@discordjs/rest');
+const { Routes } = require('discord-api-types/v9');
 
 import { Ops } from "../groups";
 import mainconfig from "../conf/config.json5";
@@ -15,6 +17,7 @@ import { CommandArgument, CommandResponse, getClientFromCommandArg } from "./hel
 import { Timer } from "../utilities";
 
 var fetchedSlashCommands: any[] = [];
+var finalSlashCommands: Command[] = [];
 var groupChoices: [name: string, value: string][] = [];;
 var gametypeChoices: [name: string, value: string][] = [];;
 var mapChoices: [name: string, value: string][] = [];
@@ -52,6 +55,8 @@ declare global
     var cmdPrefix: string;
     var themeColor: ColorResolvable;
 }
+
+export const rest = new REST({ version: '9' }).setToken(mainconfig.discord_token);
 
 export type OtherCommandArg = {
     name: string;
@@ -274,22 +279,24 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
             if( !isDefined(argObject.b3id) || !isDefined(argObject.target) || !isDefined(argObject.slot) || !isDefined(argObject.guid) )
             {
                 var specfiedClient = await getClientFromCommandArg( argObject, {
-                    BAD_B3ID: cmd.acceptArgs.b3id,
-                    BAD_GUID:cmd.acceptArgs.guid,
-                    NO_LINK:false,
-                    SLOT_EMPTY:cmd.acceptArgs.slot
-                } ).catch(() => {});
+                    BAD_B3ID: !!argObject.b3id,
+                    BAD_GUID: !!argObject.guid,
+                    NO_LINK: !!argObject.target,
+                    SLOT_EMPTY: !!argObject.slot,
+                    BOT_CLIENT: true
+                }).catch(()=>{});
+                
                 if( specfiedClient == undefined )
                 {
-                    if( cmd.calledOn == "other" )
-                        return await SendEmbed({ctx,desc: `❌ Specify a player. Type **/help** 1`});
+                    if( cmd.calledOn == "other" )                    
+                        return await SendEmbed({ ctx, desc: `❌ You need to specify a player for this command. Type **/help**`});
                     else
                     {
                         argObject.specifiedClient = commander;
                         argObject.specifiedClientLink = discodQ;
                     }
                 }
-                else 
+                else
                 {
                     argObject.specifiedClient = specfiedClient;
                     argObject.specifiedClientLink = await getLink(specfiedClient);
@@ -328,7 +335,7 @@ async function processIncomingCommand( ctx: Message | CommandInteraction )
             return await SendEmbed({ ctx, desc: `❌ Specifiy a Gametype`});
         const specifiedGametype = (GlobalGametypes as any)[argObject.gametype];
         if( specifiedGametype == undefined )
-            return await SendEmbed({ ctx, desc: `❌ Unknown map **${argObject.maptoken}**`});
+            return await SendEmbed({ ctx, desc: `❌ Unknown gametype **${argObject.gametype}**`});
         argObject.specifiedGametype = specifiedGametype;
     }
 
@@ -493,7 +500,7 @@ async function registerCommand( options: Command ): Promise<any>
     if( (isDefined(options.acceptArgs.b3id) || isDefined(options.acceptArgs.target) || isDefined(options.acceptArgs.guid) || isDefined(options.acceptArgs.slot)) && !isDefined(options.calledOn) )
         ErrorHandler.fatal(`Option "calledOn" has to be defined while creating a command which accepts "b3id" | "target" | "guid" | "slot". Please define it for command ${options.name}`);
 
-    const accInput: any = Object.fromEntries(Object.entries(options.acceptArgs).sort( ([,x],[,y]) => (x === y)? 0 : x? -1 : 1 ));    
+    const accInput: any = Object.fromEntries(Object.entries(options.acceptArgs).sort( ([,x],[,y]) => (x === y)? 0 : x? -1 : 1 )); 
 
     Object.keys(accInput).forEach( key => {
         if( key == "target" )
@@ -622,7 +629,10 @@ async function registerCommand( options: Command ): Promise<any>
             }
         }
     });
-    
+
+    // required args first
+    currentSlashCommand.options.sort( (a: any,b: any) => Number(b.required) - Number(a.required) );
+
     var createCmd: Command = { ...options }
     globalThis.GlobalCommands.push(createCmd);
 
@@ -647,7 +657,7 @@ function removeCommand( name: string ): void
 
 function getCommand( options: { name?: string, alias?: string } ): Command | undefined
 {
-    if( options === {} )
+    if( !options.name && !options.alias )
         return;
 
     for( var i = 0; i < GlobalCommands.length; i++ )
@@ -741,4 +751,13 @@ function removeAllCommandAliases( name: string ): void
 
 function getAllCommands(): Command[] {
     return GlobalCommands;
+}
+
+// TO-DO: Complete this
+export async function registerAllToDiscord()
+{
+    await rest.put(
+        Routes.applicationGuildCommands(discordClient.user?.id, discordClient.guildId ),
+        { body: finalSlashCommands },
+    );
 }

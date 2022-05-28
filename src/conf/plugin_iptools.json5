@@ -1,0 +1,76 @@
+
+{
+    enabled: true,
+
+    commands: [
+        {
+            name: 'ipban',
+            description: "Ban a player by their IP",
+            minLevel: 100,
+            alias: [],
+            type: 'slash',
+            calledOn: 'other',
+            acceptArgs: {
+                target: false,
+                b3id: false,
+                guid: false,
+                slot: false,
+                reason: true,
+                other: [
+                    {
+                        name: "ip",
+                        type: "string",
+                        description: "IP to Ban",
+                        required: false
+                    }
+                ]
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: 'locate',
+            description: "Locate a player",
+            minLevel: 20,
+            alias: [],
+            type: 'slash',
+            calledOn: 'other',
+            acceptArgs: {
+                target: false,
+                b3id: false,
+                guid: false,
+                slot: false
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: 'isp',
+            description: "Check a player's Internet Service Provider",
+            minLevel: 20,
+            alias: [],
+            type: 'slash',
+            calledOn: 'both',
+            acceptArgs: {
+                target: false,
+                b3id: false,
+                guid: false,
+                slot: false
+            },
+            visibleToAllByDefault: true,
+        },
+        {
+            name: 'allowvpn',
+            description: "Allow a player to connect with VPN",
+            minLevel: 100,
+            alias: [],
+            type: 'slash',
+            calledOn: 'other',
+            acceptArgs: {
+                target: false,
+                b3id: false,
+                guid: false,
+                slot: false
+            },
+            visibleToAllByDefault: true,
+        },
+    ]
+}

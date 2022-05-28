@@ -94,6 +94,9 @@ async function main()
         }  )
         .then( () => { pluginSpinner.succeed(`Loaded ${GlobalPlugins.length} plugins` + chalk.yellow(` - ${stepTimer.getTime()}ms`)) });
 
+    // register commands
+    
+
     // 7. Display our thing :D
     showDisCOD();
     

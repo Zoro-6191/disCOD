@@ -3,6 +3,7 @@ import { getRepository } from "typeorm";
 
 import { Discod } from "../entity/Discod";
 import { Clients } from "../entity/Clients";
+import { Aliases } from "../entity/Aliases";
 
 export type CommandArgument = { 
     ctx: Message | CommandInteraction,
@@ -37,6 +38,7 @@ type ReplyTo = {
     BAD_GUID?: boolean;
     NO_LINK?: boolean;
     SLOT_EMPTY?: boolean;
+    BOT_CLIENT?: boolean
 }
 
 export async function getClientFromCommandArg(
@@ -55,7 +57,7 @@ export async function getClientFromCommandArg(
             if( cl == undefined || arg.b3id < 2 )
             {
                 if( replyTo == undefined || ( replyTo != undefined && replyTo.BAD_B3ID != undefined && replyTo.BAD_B3ID ) )
-                    arg.ctx.reply({
+                    await arg.ctx.reply({
                         embeds: [embed.setDescription(`❌ Invalid B3 ID **@${arg.b3id}**`)],
                         ephemeral: true,
                     });
@@ -70,7 +72,7 @@ export async function getClientFromCommandArg(
             if( cl == null)
             {
                 if( replyTo == undefined || ( replyTo != undefined && replyTo.BAD_GUID != undefined && replyTo.BAD_GUID ) )
-                    arg.ctx.reply({
+                    await arg.ctx.reply({
                         embeds: [embed.setDescription(`❌ Invalid GUID **@${arg.guid}**`)],
                         ephemeral: true,
                     })
@@ -80,7 +82,18 @@ export async function getClientFromCommandArg(
         }
         else if( arg.target != undefined )
         {
-            
+            if( arg.target.bot )
+            {
+                console.log("Here");
+                
+                if( replyTo == undefined || ( replyTo != undefined && replyTo.BOT_CLIENT != undefined && replyTo.BOT_CLIENT ) )
+                    await arg.ctx.reply({
+                        embeds: [embed.setDescription(`❌ ${arg.target} is a bot`)],
+                        ephemeral: true,
+                    });
+                reject("BOT_CLIENT");
+            }
+
             const q: [Clients] = await getRepository(Clients).createQueryBuilder("clients")
                                         .leftJoin( Discod, "discod", "discod.dc_id = :dcID", { dcID: arg.target.id } )
                                         .select(["clients.*"])
@@ -90,10 +103,10 @@ export async function getClientFromCommandArg(
             if( q[0] == undefined )
             {
                 if( replyTo == undefined || ( replyTo != undefined && replyTo.NO_LINK != undefined && replyTo.NO_LINK ) )
-                    arg.ctx.reply({
-                        embeds: [embed.setDescription(`❌ <@${arg.target.id}> hasn't linked :(`)],
+                    await arg.ctx.reply({
+                        embeds: [embed.setDescription(`❌ ${arg.target} hasn't linked :(`)],
                         ephemeral: true,
-                    })
+                    }).catch(()=>{});
                 reject("NO_LINK");
             }
             else resolve( q[0] as Clients);
@@ -104,7 +117,7 @@ export async function getClientFromCommandArg(
             if( onlinePlayer == undefined )
             {
                 if( replyTo == undefined || ( replyTo != undefined && replyTo.SLOT_EMPTY != undefined && replyTo.SLOT_EMPTY ) )
-                    arg.ctx.reply({
+                    await arg.ctx.reply({
                         embeds: [embed.setDescription(`❌ Slot [${arg.slot}] is unoccupied`)],
                         ephemeral: true,
                     });
@@ -112,16 +125,7 @@ export async function getClientFromCommandArg(
             }
             resolve(await Clients.findOne({where: { guid: onlinePlayer?.guid }}));
         }
-        else 
-        {
-            if( arg.commander != undefined )
-            {
-                const cl = await Clients.findOne({where: { id: arg.commander.id }});
-                resolve(cl);
-            }
-            else return undefined;
-        }
-        return undefined;
+        resolve(undefined);
     })
 }
 
@@ -134,4 +138,60 @@ globalThis.getLink = async( client: Clients | number ): Promise< Discod | null> 
                                     .getOne();
 
     return q;
+}
+
+export function getLinkString( client: Clients, link: Discod | null | undefined ): string
+{
+    if( link == undefined || client.mask_level )
+        return `\`@${client.id}\``;
+    else return `[<@${link.dc_id}>]`;
+}
+
+export function resolveName( name: string ): string
+{
+    return name.removeCodColors()
+                .replace("`","\\`")
+                .replace("*","\\*")
+                .replace("_","\\_")
+                .replace("~","\\~")
+                .replace(">","\\>")
+                .replace("||","\\|\\|");
+}
+
+export async function getAliasString( client: Clients, charLength: number, maskFilter: boolean ): Promise<string>
+{
+    if( maskFilter && client.mask_level )
+        return "No Aliases";
+
+    const aliases = await getRepository( Aliases ).createQueryBuilder("aliases")
+                                                    .select("aliases.alias")
+                                                    .where("aliases.client_id = :id", {id: client.id})
+                                                    .orderBy("aliases.num_used", "DESC")
+                                                    // .cache(true)
+                                                    .getMany();
+                                                    // find( { where: { clientId: client.id }} )
+
+    if( !aliases.length )
+        var aliasString: string = client.name;
+    else var aliasString: string = "";
+    var andMore = `...__and [x] more__ **[%t%]**`;
+
+    for( var i = 0; i < aliases.length; i++ )
+    {
+        const fix = resolveName(aliases[i].alias);
+
+        if( (aliasString.length + fix.length) < ( charLength - andMore.length ) )
+        {
+            if( i == aliases.length - 1 )
+                aliasString += fix + ` **[${aliases.length}]**`
+            else aliasString += fix + `, `;
+        }
+        else
+        {
+            aliasString += andMore.replace("[x]",(aliases.length - i).toString())
+                                    .replace("%t%", aliases.length.toString());
+            break;
+        } 
+    }
+    return aliasString;
 }

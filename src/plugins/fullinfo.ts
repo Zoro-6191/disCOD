@@ -1,7 +1,7 @@
 import { MessageEmbed } from "discord.js";
 import axios from "axios";
 
-import { CommandArgument, CommandResponse, getClientFromCommandArg } from "../commandHandler/helper";
+import { CommandArgument, CommandResponse, getAliasString, getClientFromCommandArg, resolveName } from "../commandHandler/helper";
 import CommandManager from "../commandHandler";
 import Ops from "../groups";
 
@@ -35,10 +35,10 @@ LEFT JOIN discod ON discod.b3_id=${client.id}
 LEFT JOIN xlr_playerstats ON xlr_playerstats.client_id=${client.id}
 WHERE clients.id=${client.id}`);
 
-    embed.setTitle(`${client.name} @${client.id}`);
+    embed.setTitle(`${resolveName(client.name)}`);
 
-    const linkStr = q[0].dc_id == undefined? `> ❌ hasn't linked`: `🔗 <@${q[0].dc_id}>`;
-    const aliasString = await getAliasString( client, 500-linkStr.length );
+    const linkStr = q[0].dc_id == undefined? `\`@${client.id}\``: `\`@${client.id}\` [<@${q[0].dc_id}>]`;
+    const aliasString = await getAliasString( client, 500-linkStr.length, false );
 
     const groupName = Ops.bitsToName(q[0].group_bits);
     const groupLevel = Ops.bitsToLevel(q[0].group_bits);

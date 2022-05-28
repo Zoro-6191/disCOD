@@ -3,7 +3,7 @@ import { getRepository } from "typeorm";
 
 import { Ops } from "../groups";
 import { Clients } from "../entity/Clients";
-import { CommandArgument, CommandResponse } from "./helper";
+import { CommandArgument, CommandResponse, getAliasString, getLinkString, resolveName } from "./helper";
 import { Discod } from "../entity/Discod";
 import mainConfig from "../conf/config.json5";
 import { XlrPlayerstats } from "../entity/XlrPlayerstats";
@@ -16,12 +16,11 @@ export async function cmd_aliases( arg: CommandArgument ): Promise< CommandRespo
     const client = arg.specifiedClient;
     if( client == undefined )
         return;
-    const link = arg.specifiedClientLink;
+    const linkStr = getLinkString( client, arg.specifiedClientLink );
 
-    embed.setTitle(`${client.name} @${client.id}`);
+    embed.setTitle(`${resolveName(client.name)}`);
 
-    const linkStr = link == undefined? `> ❌ hasn't linked`: `🔗 <@${link.dc_id}>`;
-    const aliasString = await getAliasString( client, 2000-linkStr.length );
+    const aliasString = await getAliasString( client, 2000-linkStr.length, true );
 
     return embed.setDescription(`${linkStr}\n${aliasString}`);
 }
@@ -33,7 +32,7 @@ export async function cmd_ban( arg: CommandArgument ): Promise< CommandResponse 
     const client = arg.specifiedClient;
     if( client == undefined )
         return;
-    const link = arg.specifiedClientLink;
+    const linkStr = getLinkString( client, arg.specifiedClientLink );
 
     if( arg.reason == undefined )
         return embed.setDescription(`❌ You need to provide a reason`)
@@ -47,9 +46,7 @@ export async function cmd_ban( arg: CommandArgument ): Promise< CommandResponse 
 
     embed.addField("Reason",arg.reason,true);
 
-    if( link == undefined )
-        return embed.setDescription(`${client.name} \`@${client.id}\` successfully banned for 30seconds`);
-    else return embed.setDescription(`<@${link.dc_id}> **${client.name.replace("*","\*")}** \`@${client.id}\` successfully banned for 30seconds`);
+    return embed.setDescription(`☑️ **${resolveName(client.name)}** ${linkStr} banned for 30 minutes`);
 }
 
 export async function cmd_permban( arg: CommandArgument ): Promise< CommandResponse >
@@ -59,7 +56,7 @@ export async function cmd_permban( arg: CommandArgument ): Promise< CommandRespo
     const client = arg.specifiedClient;
     if( client == undefined )
         return;
-    const link = arg.specifiedClientLink;
+    const linkStr = getLinkString( client, arg.specifiedClientLink );
     
     if( arg.reason == undefined )
         return embed.setDescription(`❌ You need to provide a reason`);
@@ -73,10 +70,7 @@ export async function cmd_permban( arg: CommandArgument ): Promise< CommandRespo
 
     embed.addField("Reason",arg.reason,true);
 
-    if( link == undefined )
-        embed.setDescription(`${client.name} \`@${client.id}\` successfully banned for 30seconds`);
-    else embed.setDescription(`<@${link.dc_id}> **${client.name.replace("*","\*")}** \`@${client.id}\` successfully banned for 30seconds`);
-
+    embed.setDescription(`☑️ **${resolveName(client.name)}** ${linkStr} permanently banned`);
 
     return embed;
 }
@@ -88,24 +82,18 @@ export async function cmd_unban( arg: CommandArgument ): Promise< CommandRespons
     const client = arg.specifiedClient;
     if( client == undefined )
         return;
-    const link = arg.specifiedClientLink;
+    const linkStr = getLinkString( client, arg.specifiedClientLink );
     
     rcon.sendRconCommand(`unban ${client.guid}`);
 
     const check = await db.rawQuery(`SELECT * FROM penalties WHERE client_id=${client.id} AND inactive=0`);
 
     if( !check.length )
-    {
-        if( link == undefined )
-            return embed.setDescription(`${client.name} \`@${client.id}\` isn't banned. If this player was banned from rcon, they have been unbanned.`);
-        else return embed.setDescription(`<@${link.dc_id}> **${client.name.replace("*","\*")}** \`@${client.id}\` isn't banned. If this player was banned from rcon, they have been unbanned.`);
-    }
+        return embed.setDescription(`**${resolveName(client.name)}** ${linkStr} isn't banned. If this player was banned from RCON, they have been unbanned.`);
 
     await db.rawQuery(`UPDATE penalties SET inactive=1,time_edit=UNIX_TIMESTAMP() WHERE client_id=${client.id} AND inactive=0`)
 
-    if( link == undefined )
-        return embed.setDescription(`${client.name} \`@${client.id}\` successfully unbanned`);
-    else return embed.setDescription(`<@${link.dc_id}> **${client.name.replace("*","\*")}** \`@${client.id}\` successfully unbanned`);
+    return embed.setDescription(`☑️ Unbanned **${resolveName(client.name)}** ${linkStr}`);
 }
 
 export async function cmd_baninfo( arg: CommandArgument ): Promise< CommandResponse >
@@ -115,7 +103,7 @@ export async function cmd_baninfo( arg: CommandArgument ): Promise< CommandRespo
     const client = arg.specifiedClient;
     if( client == undefined )
         return;
-    const link = arg.specifiedClientLink;
+    const linkStr = getLinkString( client, arg.specifiedClientLink );
 
     const query = await db.rawQuery(`
             SELECT * FROM clients,penalties 
@@ -129,17 +117,11 @@ export async function cmd_baninfo( arg: CommandArgument ): Promise< CommandRespo
             `);
 
     if( !query.length )
-    {
-        if( link != undefined )
-            return embed.setDescription(`<@${link.dc_id}> **${client.name}** has no active bans`);
-        else return embed.setDescription(`**${client.name}** has no active bans`);
-    }
+        return embed.setDescription(`**${resolveName(client.name)}** ${linkStr} has no active bans`);
 
     embed.setTitle(`${query[0].type}`);
     
-    if( link != undefined )
-        embed.setDescription(`<@${link.dc_id}> **__${query[0].name}__** @${query[0].client_id}`);
-    else embed.setDescription(`**__${query[0].name}__** @${query[0].client_id}`);
+    embed.setDescription(`**__${query[0].name}__** ${linkStr}`);
     
     embed.addField( `Admin` , `**${arg.commander?.name}** @${query[0].admin_id}` , true )
         .addField( `Time of Ban` , `${new Date(query[0].time_add*1000).toLocaleString()}` , true )
@@ -158,13 +140,9 @@ export async function cmd_id( arg: CommandArgument ): Promise< CommandResponse >
     const client = arg.specifiedClient;
     if( client == undefined )
         return;
-    const link = arg.specifiedClientLink;
+    const linkStr = getLinkString( client, arg.specifiedClientLink );
 
-    if( link == undefined )
-        embed.setDescription(`${client.name} \`${client.id}\``);
-    else embed.setDescription(`<@${link.dc_id}> **${client.name.replace("*","\*")} @${client.id}**`);
-
-    return embed;
+    return embed.setDescription(`**${resolveName(client.name)}** ${linkStr}`);
 }
 
 export async function cmd_guid( arg: CommandArgument ): Promise< CommandResponse >
@@ -174,13 +152,9 @@ export async function cmd_guid( arg: CommandArgument ): Promise< CommandResponse
     const client = arg.specifiedClient;
     if( client == undefined )
         return;
-    const link = arg.specifiedClientLink;
+    const linkStr = getLinkString( client, arg.specifiedClientLink );
 
-    if( link != undefined )
-        embed.setDescription(`<@${link.dc_id}> ${client.name} \`@${client.id}\`: **${client.guid}**`);
-    else embed.setDescription(`${client.name} \`@${client.id}\`: **${client.guid}**`);
-
-    return embed;
+    return embed.setDescription(`${resolveName(client.name)} ${linkStr}: **${client.guid}**`);
 }
 
 export async function cmd_lbans(): Promise< CommandResponse >
@@ -243,25 +217,17 @@ export async function cmd_putgroup( arg: CommandArgument ): Promise< CommandResp
     const client = arg.specifiedClient;
     if( client == undefined )
         return;
-    const link = arg.specifiedClientLink;
+    const linkStr = getLinkString( client, arg.specifiedClientLink );
     const group = arg.specifiedGroup;
     if( group == undefined )
         return;
 
     if( client.group_bits == group.bits )
-    {
-        if( link != undefined )
-            return embed.setDescription(`❌ <@${link.dc_id}> ${client.name} \`@${client.id}\` is already in group **${group.name}**`);
-        else return embed.setDescription(`❌ ${client.name} \`@${client.id}\` is already in group **${group.name}**`);
-    }
+        return embed.setDescription(`❌ ${resolveName(client.name)} ${linkStr} is already in group **${group.name}**`);
     
     await db.rawQuery(`UPDATE clients SET group_bits=${group.bits},time_edit=UNIX_TIMESTAMP() WHERE id=${client.id}`);
 
-    if( link != undefined )
-        embed.setDescription(`☑️ <@${link.dc_id}> ${client.name} \`@${client.id}\` put in group **${group.name}**. (was ${Ops.bitsToName(client.group_bits)})`);
-    else embed.setDescription(`☑️ ${client.name} \`@${client.id}\` put in group **${group.name}**. (was ${Ops.bitsToName(client.group_bits)})`);
-
-    return embed;
+    return embed.setDescription(`☑️ **${resolveName(client.name)}** ${linkStr} put in group **${group.name}**. (was ${Ops.bitsToName(client.group_bits)})`);
 }
 
 export async function cmd_mask( arg: CommandArgument ): Promise< CommandResponse >
@@ -274,26 +240,20 @@ export async function cmd_mask( arg: CommandArgument ): Promise< CommandResponse
     const client = arg.specifiedClient;
     if( client == undefined )
         return;
-    const link = arg.specifiedClientLink;
+    const linkStr = getLinkString( client, arg.specifiedClientLink );
 
     const group = arg.specifiedGroup;    
     if( group == undefined )
         return;
+    if( group.level == 0 )
+        return embed.setDescription(`❌ Cannot mask as **${group.name}**`);
 
-    if( client?.mask_level == group.level )
-    {
-        if( link != undefined )
-            return embed.setDescription(`❌ <@${link.dc_id}> ${client.name} \`@${client.id}\` is already masked as **${group.name}**`);
-        else return embed.setDescription(`❌ ${client.name} \`@${client.id}\` is already masked as **${group.name}**`);
-    }
+    if( client.mask_level == group.level )
+        return embed.setDescription(`❌ ${resolveName(client.name)} ${linkStr} is already masked as **${group.name}**`);
 
     await db.rawQuery(`UPDATE clients SET mask_level=${group.level},time_edit=UNIX_TIMESTAMP() WHERE id=${client?.id}`);
 
-    if( link != undefined )
-        embed.setDescription(`☑️ <@${link.dc_id}> ${client?.name} \`@${client?.id}\` masked as **${group.name}**`);
-    else embed.setDescription(`☑️ ${client?.name} \`@${client?.id}\` masked as **${group.name}**`);
-
-    return embed;
+    return embed.setDescription(`☑️ **${resolveName(client.name)}** ${linkStr} masked as **${group.name}**`);
 }
 
 export async function cmd_unmask( arg: CommandArgument ): Promise< CommandResponse >
@@ -303,23 +263,14 @@ export async function cmd_unmask( arg: CommandArgument ): Promise< CommandRespon
     const client = arg.specifiedClient;
     if( client == undefined )
         return;
-    const link = arg.specifiedClientLink;
+    const linkStr = getLinkString( client, arg.specifiedClientLink );
 
     if( client.mask_level < 1 )
-    {
-        if( link != undefined )
-            embed.setDescription(`❌ <@${link.dc_id}> ${client?.name} \`@${client?.id}\` isn't masked`);
-        else embed.setDescription(`❌ ${client?.name} \`@${client?.id}\` isn't masked`);
-        return embed;
-    }
+        return embed.setDescription(`❌ **${client?.name}** ${linkStr} isn't masked`);
 
     await db.rawQuery(`UPDATE clients SET mask_level=0,time_edit=UNIX_TIMESTAMP() WHERE id=${client.id}`);
 
-    if( link != undefined )
-        embed.setDescription(`☑️ <@${link.dc_id}> ${client?.name} \`@${client?.id}\` **Unmasked**`);
-    else embed.setDescription(`☑️ ${client?.name} \`@${client?.id}\` masked as **Unmasked**`);
-
-    return embed;
+    return embed.setDescription(`☑️ **${client?.name}** ${linkStr} was **Unmasked**`);
 }
 
 export async function cmd_fast_restart( arg: CommandArgument ): Promise< CommandResponse >
@@ -358,7 +309,7 @@ export async function cmd_leveltest( arg: CommandArgument ): Promise< CommandRes
     const client = arg.specifiedClient;
     if( client == undefined )
         return;
-    const link = arg.specifiedClientLink;
+    const linkStr = getLinkString( client, arg.specifiedClientLink );
 
     var group: GlobalGroup | undefined;
     
@@ -369,11 +320,7 @@ export async function cmd_leveltest( arg: CommandArgument ): Promise< CommandRes
     if( group == undefined )
         throw new Error("GROUP_UNDEFINED");
 
-    if( link != undefined )
-        embed.setDescription(`<@${link.dc_id}> ${client.name} \`@${client.id}\` is **${group.name}** since ${getReadableDateFromTimestamp(client.time_add)}`);
-    else embed.setDescription(`${client.name} \`@${client.id}\` is **${group.name}** since ${getReadableDateFromTimestamp(client.time_add)}`);
-
-    return embed;
+    return embed.setDescription(`**${resolveName(client.name)}** ${linkStr} is **${group.name}** since ${getReadableDateFromTimestamp(client.time_add)}`);
 }
 
 export async function cmd_masktest( arg: CommandArgument ): Promise<CommandResponse>
@@ -383,7 +330,7 @@ export async function cmd_masktest( arg: CommandArgument ): Promise<CommandRespo
     const client = arg.specifiedClient;
     if( client == undefined )
         return;
-    const link = arg.specifiedClientLink;
+    const linkStr = getLinkString( client, arg.specifiedClientLink );
 
     var maskGroup: GlobalGroup | undefined;
 
@@ -391,19 +338,11 @@ export async function cmd_masktest( arg: CommandArgument ): Promise<CommandRespo
         maskGroup = Ops.getGroupFromLevel(client.mask_level);
 
     if( maskGroup == undefined )
-    {
-        if( link != undefined )
-            return embed.setDescription(`<@${link.dc_id}> ${client.name} \`@${client.id}\` is not masked`);
-        else embed.setDescription(`${client.name} \`@${client.id}\` is not masked`);
-    }
+        return embed.setDescription(`**${resolveName(client.name)}** ${linkStr} is not masked`);
 
     const userGroup = Ops.getGroupFromBits(client.group_bits);
 
-    if( link != undefined )
-        embed.setDescription(`<@${link.dc_id}> ${client.name} \`@${client.id}\` of group ${userGroup?.name} is masked as **${maskGroup?.name}**`);
-    else embed.setDescription(`${client.name} \`@${client.id}\` of group ${userGroup?.name} is masked as **${maskGroup?.name}**`);
-
-    return embed;
+    return embed.setDescription(`**${resolveName(client.name)}** ${linkStr} of group ${userGroup?.name} is masked as **${maskGroup?.name}**`);
 }
 
 export async function cmd_list(): Promise<CommandResponse>
@@ -534,14 +473,10 @@ export async function cmd_seen( arg: CommandArgument ): Promise<CommandResponse>
     const client = arg.specifiedClient;
     if( client == undefined )
         return;
-    const link = arg.specifiedClientLink;
+    const linkStr = getLinkString( client, arg.specifiedClientLink );
     const lastseen = new Date(client.time_edit*1000);
     
-    if( link != undefined )
-        embed.setDescription(`<@${link.dc_id}> ${client.name} \`@${client.id}\` was last seen on **${lastseen.toLocaleDateString()} ${lastseen.toLocaleTimeString()}**`);
-    else embed.setDescription(`${client.name} \`@${client.id}\` was last seen on **${lastseen.toLocaleDateString()} ${lastseen.toLocaleTimeString()}**`);
-
-    return embed;
+    return embed.setDescription(`**${resolveName(client.name)}** ${linkStr} was last seen on **${lastseen.toLocaleDateString()} ${lastseen.toLocaleTimeString()}**`);
 }
 
 export async function cmd_lookup( arg: CommandArgument ): Promise<CommandResponse>
@@ -747,24 +682,24 @@ export async function cmd_xlrstats( arg: CommandArgument ): Promise<CommandRespo
     const client = arg.specifiedClient;
     if( client == undefined )
         return;
-    const link = arg.specifiedClientLink;
+    const linkStr = getLinkString( client, arg.specifiedClientLink );
         
     const stats = await getRepository(XlrPlayerstats).findOne( { where: { client_id: client.id }});
 
-    var str = ``;
-
-    if( link != undefined )
-        str += `<@${link.dc_id}> `;
-    
-    str += `${client.name} \`@${client.id}\`**\n`;
+    var str = `**XLR Stats** for **${resolveName(client.name)}** ${linkStr}\n`;
 
     if( stats == undefined )
         return embed.setDescription( str + " hasn't registered yet");
 
     str += `\`\`\`c
-Kills: ${stats.kills}\nDeaths: ${stats.deaths}\nKDR: ${stats.ratio}\nSkill: ${stats.skill}\nRounds Played: ${stats.rounds}\nMax Win Streak: ${stats.winstreak}\`\`\``
+Kills: ${stats.kills}
+Deaths: ${stats.deaths}
+KDR: ${stats.ratio}
+Skill: ${stats.skill}
+Rounds Played: ${stats.rounds}
+Max Win Streak: ${stats.winstreak}\`\`\``
 
-    return embed.setDescription("**XLR Stats for " + str);
+    return embed.setDescription(str);
 }
 
 export async function cmd_xlrtopstats(): Promise<CommandResponse>
